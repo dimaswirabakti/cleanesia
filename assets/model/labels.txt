@@ -1,0 +1,5 @@
+plastik
+styrofoam
+logam
+kaca
+jaring
