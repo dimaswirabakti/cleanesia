@@ -1,1 +1,44 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"cleanesia","appId":"1:946475096492:android:97bb14f6fffd0583de8209","fileOutput":"android/app/google-services.json"}},"ios":{"default":{"projectId":"cleanesia","appId":"1:946475096492:ios:4300d06d7998ed80de8209","uploadDebugSymbols":false,"fileOutput":"ios/Runner/GoogleService-Info.plist"}},"dart":{"lib/firebase_options.dart":{"projectId":"cleanesia","configurations":{"android":"1:946475096492:android:97bb14f6fffd0583de8209","ios":"1:946475096492:ios:4300d06d7998ed80de8209"}}}}}}
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "cleanesia",
+          "appId": "1:946475096492:android:97bb14f6fffd0583de8209",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "ios": {
+        "default": {
+          "projectId": "cleanesia",
+          "appId": "1:946475096492:ios:4300d06d7998ed80de8209",
+          "uploadDebugSymbols": false,
+          "fileOutput": "ios/Runner/GoogleService-Info.plist"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "cleanesia",
+          "configurations": {
+            "android": "1:946475096492:android:97bb14f6fffd0583de8209",
+            "ios": "1:946475096492:ios:4300d06d7998ed80de8209"
+          }
+        }
+      }
+    }
+  },
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "default",
+      "disallowLegacyRuntimeConfig": true,
+      "ignore": [
+        "node_modules",
+        ".git",
+        "firebase-debug.log",
+        "firebase-debug.*.log",
+        "*.local"
+      ]
+    }
+  ]
+}

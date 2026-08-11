@@ -24,27 +24,6 @@ const _labelParah = {
 class HomeMapScreen extends StatelessWidget {
   const HomeMapScreen({super.key});
 
-  // Ambil laporan terbaru per sel
-  Map<String, _CellAgg> _aggregate(List<QueryDocumentSnapshot> docs) {
-    final map = <String, _CellAgg>{};
-    for (final d in docs) {
-      final m = d.data() as Map<String, dynamic>;
-      final cellId = m['cellId'] as String?;
-      final ts = m['createdAt'];
-      if (cellId == null || ts is! Timestamp) continue;
-      final at = ts.toDate();
-      final sev = (m['severity'] as num?)?.toInt() ?? 3;
-      final types = ((m['types'] as List?) ?? const [])
-          .map((e) => WasteType.values.byName(e as String))
-          .toSet();
-      final ex = map[cellId];
-      if (ex == null || at.isAfter(ex.latestAt)) {
-        map[cellId] = _CellAgg(sev, at, types);
-      }
-    }
-    return map;
-  }
-
   Color _severityColor(int sev) {
     switch (sev) {
       case 1:
@@ -137,10 +116,23 @@ class HomeMapScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Cleanesia')),
       body: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance.collection('reports').snapshots(),
+        stream: FirebaseFirestore.instance.collection('cells').snapshots(),
         builder: (context, snap) {
           final docs = snap.data?.docs ?? const <QueryDocumentSnapshot>[];
-          final cells = _aggregate(docs);
+          final cells = <String, _CellAgg>{};
+          for (final d in docs) {
+            final m = d.data() as Map<String, dynamic>;
+            final id = m['cellId'] as String?;
+            final ts = m['latestReportAt'];
+            if (id == null || ts is! Timestamp) continue;
+            cells[id] = _CellAgg(
+              (m['latestSeverity'] as num?)?.toInt() ?? 3,
+              ts.toDate(),
+              ((m['types'] as List?) ?? const [])
+                  .map((e) => WasteType.values.byName(e as String))
+                  .toSet(),
+            );
+          }
           final center = cells.isNotEmpty
               ? () {
                   final b = cellBounds(cells.keys.first);
