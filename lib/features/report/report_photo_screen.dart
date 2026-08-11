@@ -52,6 +52,7 @@ class _S extends State<ReportPhotoScreen> {
         '/report/detail',
         arguments: ReportDraft(
           imagePath: x.path,
+          prob: hasil.prob,
           types: {...hasil.terdeteksi},
           pakaiStub: hasil.pakaiStub,
           lat: pos?.latitude,
