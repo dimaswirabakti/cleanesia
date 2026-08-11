@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'core/theme.dart';
-import 'features/home/home_map_screen.dart';
+import 'features/shell/main_shell.dart';
 import 'features/report/report_photo_screen.dart';
 import 'features/report/report_detail_screen.dart';
 import 'features/report/report_done_screen.dart';
@@ -42,7 +42,7 @@ class CleanesiaApp extends StatelessWidget {
       initialRoute: '/',
       routes: {
         '/': (_) => const LandingScreen(),
-        '/home': (_) => const HomeMapScreen(),
+        '/home': (_) => const MainShell(),
         '/report/photo': (_) => const ReportPhotoScreen(),
         '/report/detail': (_) => const ReportDetailScreen(),
         '/report/done': (_) => const ReportDoneScreen(),

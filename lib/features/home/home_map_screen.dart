@@ -1,18 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../core/constants.dart';
 import '../../core/geo.dart';
-import '../../models/report.dart';
 import '../../core/theme.dart';
-
-class _CellAgg {
-  final int severity;
-  final DateTime latestAt;
-  final Set<WasteType> types;
-  _CellAgg(this.severity, this.latestAt, this.types);
-}
+import 'cell_map.dart';
 
 const _labelParah = {
   1: 'Sangat Rendah',
@@ -25,42 +15,6 @@ const _labelParah = {
 class HomeMapScreen extends StatelessWidget {
   const HomeMapScreen({super.key});
 
-  Color _severityColor(int sev) =>
-      AppColors.severity[sev] ?? AppColors.severity[3]!;
-
-  double _freshOpacity(int ageDays) {
-    final t = (ageDays / kStaleThresholdDays).clamp(0.0, 1.0);
-    return 0.70 - 0.45 * t;
-  }
-
-  List<Polygon> _polygons(Map<String, _CellAgg> cells) {
-    final now = DateTime.now();
-    final out = <Polygon>[];
-    cells.forEach((id, agg) {
-      final b = cellBounds(id);
-      final ageDays = now.difference(agg.latestAt).inDays;
-      final Color fill = ageDays > kStaleThresholdDays
-          ? AppColors.unmonitored.withValues(alpha: 0.35)
-          : _severityColor(
-              agg.severity,
-            ).withValues(alpha: _freshOpacity(ageDays));
-      out.add(
-        Polygon(
-          points: [
-            LatLng(b.latLo, b.lngLo),
-            LatLng(b.latHi, b.lngLo),
-            LatLng(b.latHi, b.lngHi),
-            LatLng(b.latLo, b.lngHi),
-          ],
-          color: fill,
-          borderColor: Colors.black26,
-          borderStrokeWidth: 0.5,
-        ),
-      );
-    });
-    return out;
-  }
-
   String _ago(DateTime t) {
     final d = DateTime.now().difference(t);
     if (d.inDays > 0) return '${d.inDays} hari lalu';
@@ -68,31 +22,31 @@ class HomeMapScreen extends StatelessWidget {
     return '${d.inMinutes} menit lalu';
   }
 
-  void _detailSel(BuildContext ctx, Map<String, _CellAgg> cells, LatLng p) {
+  void _detailSel(BuildContext ctx, Map<String, CellAgg> cells, LatLng p) {
     final agg = cells[computeCellId(p.latitude, p.longitude)];
     showModalBottomSheet(
       context: ctx,
       builder: (_) => Padding(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(AppSpacing.lg),
         child: agg == null
-            ? const Text('Belum terpantau di sel ini.')
+            ? const Text('Belum terpantau di sel ini.', style: AppText.body)
             : Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     'Keparahan: ${_labelParah[agg.severity]}',
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: AppText.section,
                   ),
                   const SizedBox(height: 8),
-                  Text('Jenis: ${agg.types.map((t) => t.name).join(", ")}'),
+                  Text(
+                    'Jenis: ${agg.types.map((t) => t.name).join(", ")}',
+                    style: AppText.body,
+                  ),
                   const SizedBox(height: 4),
                   Text(
                     'Terakhir dilaporkan: ${_ago(agg.latestAt)}',
-                    style: const TextStyle(color: Colors.grey),
+                    style: AppText.caption,
                   ),
                 ],
               ),
@@ -103,56 +57,10 @@ class HomeMapScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Cleanesia')),
-      body: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance.collection('cells').snapshots(),
-        builder: (context, snap) {
-          final docs = snap.data?.docs ?? const <QueryDocumentSnapshot>[];
-          final cells = <String, _CellAgg>{};
-          for (final d in docs) {
-            final m = d.data() as Map<String, dynamic>;
-            final id = m['cellId'] as String?;
-            final ts = m['latestReportAt'];
-            if (id == null || ts is! Timestamp) continue;
-            cells[id] = _CellAgg(
-              (m['latestSeverity'] as num?)?.toInt() ?? 3,
-              ts.toDate(),
-              ((m['types'] as List?) ?? const [])
-                  .map((e) => WasteType.values.byName(e as String))
-                  .toSet(),
-            );
-          }
-          final center = cells.isNotEmpty
-              ? () {
-                  final b = cellBounds(cells.keys.first);
-                  return LatLng(b.latMid, b.lngMid);
-                }()
-              : const LatLng(-8.025, 110.332); // default: pantai parangtritis
-          return FlutterMap(
-            options: MapOptions(
-              initialCenter: center,
-              initialZoom: 15,
-              onTap: (tapPos, latlng) => _detailSel(context, cells, latlng),
-            ),
-            children: [
-              TileLayer(
-                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                userAgentPackageName: 'com.mencarijatidiri.cleanesia',
-              ),
-              PolygonLayer(polygons: _polygons(cells)),
-              const RichAttributionWidget(
-                attributions: [
-                  TextSourceAttribution('OpenStreetMap contributors'),
-                ],
-              ),
-            ],
-          );
-        },
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => Navigator.pushNamed(context, '/report/photo'),
-        icon: const Icon(Icons.camera_alt),
-        label: const Text('Laporkan Sampah'),
+      appBar: AppBar(title: const Text('Peta Sebaran')),
+      body: CellMap(
+        interactive: true,
+        onTapCell: (cells, p) => _detailSel(context, cells, p),
       ),
     );
   }
