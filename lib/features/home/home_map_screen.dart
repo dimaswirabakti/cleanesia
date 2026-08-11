@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../core/constants.dart';
 import '../../core/geo.dart';
 import '../../models/report.dart';
+import '../../core/theme.dart';
 
 class _CellAgg {
   final int severity;
@@ -24,20 +25,8 @@ const _labelParah = {
 class HomeMapScreen extends StatelessWidget {
   const HomeMapScreen({super.key});
 
-  Color _severityColor(int sev) {
-    switch (sev) {
-      case 1:
-        return const Color(0xFF2E7D32);
-      case 2:
-        return const Color(0xFF9CCC65);
-      case 3:
-        return const Color(0xFFFFB300);
-      case 4:
-        return const Color(0xFFF4511E);
-      default:
-        return const Color(0xFFC62828);
-    }
-  }
+  Color _severityColor(int sev) =>
+      AppColors.severity[sev] ?? AppColors.severity[3]!;
 
   double _freshOpacity(int ageDays) {
     final t = (ageDays / kStaleThresholdDays).clamp(0.0, 1.0);
@@ -51,7 +40,7 @@ class HomeMapScreen extends StatelessWidget {
       final b = cellBounds(id);
       final ageDays = now.difference(agg.latestAt).inDays;
       final Color fill = ageDays > kStaleThresholdDays
-          ? Colors.grey.withValues(alpha: 0.35) // belum terpantau
+          ? AppColors.unmonitored.withValues(alpha: 0.35)
           : _severityColor(
               agg.severity,
             ).withValues(alpha: _freshOpacity(ageDays));
