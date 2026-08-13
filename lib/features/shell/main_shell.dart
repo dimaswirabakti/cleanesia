@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import '../../core/theme.dart';
 import '../home/beranda_screen.dart';
 import '../home/home_map_screen.dart';
-import 'placeholder_screen.dart';
+import '../activity/aktivitas_screen.dart';
+import '../profile/profil_screen.dart';
 
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
@@ -18,15 +19,21 @@ class _MainShellState extends State<MainShell> {
     final pages = [
       BerandaScreen(onLihatPeta: () => setState(() => _i = 1)),
       const HomeMapScreen(),
-      const PlaceholderScreen(judul: 'Laporan'),
-      const PlaceholderScreen(judul: 'Aktivitas'),
-      const PlaceholderScreen(judul: 'Profil'),
+      const SizedBox.shrink(),
+      const AktivitasScreen(),
+      const ProfilScreen(),
     ];
     return Scaffold(
       body: IndexedStack(index: _i, children: pages),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _i,
-        onDestinationSelected: (v) => setState(() => _i = v),
+        onDestinationSelected: (v) {
+          if (v == 2) {
+            Navigator.pushNamed(context, '/report/photo');
+          } else {
+            setState(() => _i = v);
+          }
+        },
         backgroundColor: AppColors.bg,
         indicatorColor: AppColors.brand100,
         destinations: const [
@@ -41,13 +48,13 @@ class _MainShellState extends State<MainShell> {
             label: 'Peta',
           ),
           NavigationDestination(
-            icon: Icon(Icons.description_outlined),
-            selectedIcon: Icon(Icons.description),
-            label: 'Laporan',
+            icon: Icon(Icons.camera_alt_outlined),
+            selectedIcon: Icon(Icons.camera_alt),
+            label: 'Laporkan',
           ),
           NavigationDestination(
-            icon: Icon(Icons.show_chart),
-            selectedIcon: Icon(Icons.show_chart),
+            icon: Icon(Icons.receipt_long_outlined),
+            selectedIcon: Icon(Icons.receipt_long),
             label: 'Aktivitas',
           ),
           NavigationDestination(

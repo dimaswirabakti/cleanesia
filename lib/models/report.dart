@@ -34,6 +34,7 @@ class Report {
   final DateTime createdAt;
   final String reporterId;
   final String? thumbnailUrl;
+  final String? localPhotoPath;
 
   const Report({
     this.reportId,
@@ -46,6 +47,7 @@ class Report {
     required this.createdAt,
     required this.reporterId,
     this.thumbnailUrl,
+    this.localPhotoPath,
   });
 
   Map<String, dynamic> toMap() => {
@@ -58,6 +60,7 @@ class Report {
     'createdAt': Timestamp.fromDate(createdAt),
     'reporterId': reporterId,
     'thumbnailUrl': thumbnailUrl,
+    'localPhotoPath': localPhotoPath,
   };
 
   factory Report.fromMap(String id, Map<String, dynamic> m) => Report(
@@ -73,5 +76,6 @@ class Report {
     createdAt: (m['createdAt'] as Timestamp).toDate(),
     reporterId: m['reporterId'] as String,
     thumbnailUrl: m['thumbnailUrl'] as String?,
+    localPhotoPath: m['localPhotoPath'] as String?,
   );
 }

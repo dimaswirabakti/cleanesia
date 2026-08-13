@@ -60,6 +60,7 @@ class HomeMapScreen extends StatelessWidget {
       appBar: AppBar(title: const Text('Peta Sebaran')),
       body: CellMap(
         interactive: true,
+        ikutiLokasi: true,
         onTapCell: (cells, p) => _detailSel(context, cells, p),
       ),
     );

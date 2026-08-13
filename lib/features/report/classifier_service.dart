@@ -14,7 +14,6 @@ class HasilKlasifikasi {
 
 class ClassifierService {
   Interpreter? _interp;
-  List<WasteType> _labels = WasteType.values;
   List<double> _th = List.filled(5, 0.5);
   bool _stub = false;
 
@@ -31,7 +30,6 @@ class ClassifierService {
       _interp = await Interpreter.fromAsset('assets/model/model_jenis.tflite');
       final th = await rootBundle.loadString('assets/model/thresholds.txt');
       _th = th.trim().split('\n').map((e) => double.parse(e.trim())).toList();
-      _labels = _urutan;
       _stub = false;
     } catch (e) {
       // Simulator / model gagal dimuat

@@ -40,7 +40,7 @@ class LandingScreen extends StatelessWidget {
         body: Stack(
           fit: StackFit.expand,
           children: [
-            Image.asset('assets/images/landing_bg.png', fit: BoxFit.cover),
+            Image.asset('assets/images/landing_bg.jpeg', fit: BoxFit.cover),
             const DecoratedBox(
               decoration: BoxDecoration(
                 gradient: LinearGradient(

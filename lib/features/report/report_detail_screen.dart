@@ -61,6 +61,7 @@ class _S extends State<ReportDetailScreen> {
         cellId: computeCellId(lat, lng),
         createdAt: DateTime.now(),
         reporterId: uid,
+        localPhotoPath: draft.localPhotoName,
       );
       FirebaseFirestore.instance.collection('reports').add(r.toMap());
       if (!mounted) return;
@@ -191,7 +192,7 @@ class _S extends State<ReportDetailScreen> {
             const Padding(
               padding: EdgeInsets.only(top: 8),
               child: Text(
-                'Mode stub (model tak jalan di Simulator) — hasil tiruan',
+                'Mode stub (model tak jalan di Simulator)',
                 style: TextStyle(color: AppColors.warning, fontSize: 12),
               ),
             ),

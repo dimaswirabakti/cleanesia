@@ -6,6 +6,7 @@ import '../../core/constants.dart';
 import '../../core/geo.dart';
 import '../../core/theme.dart';
 import '../../models/report.dart';
+import 'package:geolocator/geolocator.dart';
 
 class CellAgg {
   final int severity;
@@ -64,10 +65,49 @@ List<Polygon> cellPolygons(Map<String, CellAgg> cells) {
   return out;
 }
 
-class CellMap extends StatelessWidget {
+class CellMap extends StatefulWidget {
   final bool interactive;
   final void Function(Map<String, CellAgg> cells, LatLng p)? onTapCell;
-  const CellMap({super.key, this.interactive = true, this.onTapCell});
+  final bool ikutiLokasi;
+  final bool tampilNasional;
+  const CellMap({
+    super.key,
+    this.interactive = true,
+    this.onTapCell,
+    this.ikutiLokasi = false,
+    this.tampilNasional = false,
+  });
+
+  @override
+  State<CellMap> createState() => _CellMapState();
+}
+
+class _CellMapState extends State<CellMap> {
+  final _mapController = MapController();
+  LatLng? _lokasi;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.ikutiLokasi) _muatLokasi();
+  }
+
+  Future<void> _muatLokasi() async {
+    var izin = await Geolocator.checkPermission();
+    if (izin == LocationPermission.denied) {
+      izin = await Geolocator.requestPermission();
+    }
+    if (izin == LocationPermission.denied ||
+        izin == LocationPermission.deniedForever) {
+      return;
+    }
+    try {
+      final pos = await Geolocator.getCurrentPosition();
+      if (!mounted) return;
+      setState(() => _lokasi = LatLng(pos.latitude, pos.longitude));
+      _mapController.move(_lokasi!, 16);
+    } catch (_) {}
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -76,21 +116,36 @@ class CellMap extends StatelessWidget {
       builder: (context, snap) {
         final docs = snap.data?.docs ?? const <QueryDocumentSnapshot>[];
         final cells = aggregateCells(docs);
-        final center = cells.isNotEmpty
-            ? () {
-                final b = cellBounds(cells.keys.first);
-                return LatLng(b.latMid, b.lngMid);
-              }()
-            : const LatLng(-8.025, 110.332);
+
+        LatLng center;
+        double zoom;
+        if (widget.tampilNasional) {
+          center = const LatLng(-2.5, 118.0); // titik tengah Indonesia
+          zoom = 3.5;
+        } else if (widget.ikutiLokasi) {
+          center = _lokasi ?? const LatLng(-8.025, 110.332);
+          zoom = _lokasi != null ? 16 : 5;
+        } else if (cells.isNotEmpty) {
+          final b = cellBounds(cells.keys.first);
+          center = LatLng(b.latMid, b.lngMid);
+          zoom = 15;
+        } else {
+          center = const LatLng(-8.025, 110.332);
+          zoom = 15;
+        }
+
         return FlutterMap(
+          mapController: _mapController,
           options: MapOptions(
             initialCenter: center,
-            initialZoom: 15,
-            onTap: (interactive && onTapCell != null)
-                ? (tp, p) => onTapCell!(cells, p)
+            initialZoom: zoom,
+            onTap: (widget.interactive && widget.onTapCell != null)
+                ? (tp, p) => widget.onTapCell!(cells, p)
                 : null,
             interactionOptions: InteractionOptions(
-              flags: interactive ? InteractiveFlag.all : InteractiveFlag.none,
+              flags: widget.interactive
+                  ? InteractiveFlag.all
+                  : InteractiveFlag.none,
             ),
           ),
           children: [
@@ -99,7 +154,22 @@ class CellMap extends StatelessWidget {
               userAgentPackageName: 'com.mencarijatidiri.cleanesia',
             ),
             PolygonLayer(polygons: cellPolygons(cells)),
-            if (interactive)
+            if (_lokasi != null)
+              MarkerLayer(
+                markers: [
+                  Marker(
+                    point: _lokasi!,
+                    width: 24,
+                    height: 24,
+                    child: const Icon(
+                      Icons.my_location,
+                      color: AppColors.brand700,
+                      size: 24,
+                    ),
+                  ),
+                ],
+              ),
+            if (widget.interactive)
               const RichAttributionWidget(
                 attributions: [
                   TextSourceAttribution('OpenStreetMap contributors'),

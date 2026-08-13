@@ -4,6 +4,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:geolocator/geolocator.dart';
 import 'classifier_service.dart';
 import 'report_draft.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as p;
 
 class ReportPhotoScreen extends StatefulWidget {
   const ReportPhotoScreen({super.key});
@@ -27,8 +29,9 @@ class _S extends State<ReportPhotoScreen> {
       izin = await Geolocator.requestPermission();
     }
     if (izin == LocationPermission.denied ||
-        izin == LocationPermission.deniedForever)
+        izin == LocationPermission.deniedForever) {
       return null;
+    }
     try {
       return await Geolocator.getCurrentPosition();
     } catch (_) {
@@ -46,12 +49,19 @@ class _S extends State<ReportPhotoScreen> {
       }
       final hasil = await _clf.classify(File(x.path));
       final pos = await _gps();
+      final dir = await getApplicationDocumentsDirectory();
+      final fotoDir = Directory(p.join(dir.path, 'foto'));
+      if (!await fotoDir.exists()) await fotoDir.create(recursive: true);
+      final namaFile = '${DateTime.now().millisecondsSinceEpoch}.jpg';
+      final tujuan = p.join(fotoDir.path, namaFile);
+      await File(x.path).copy(tujuan);
       if (!mounted) return;
       Navigator.pushNamed(
         context,
         '/report/detail',
         arguments: ReportDraft(
-          imagePath: x.path,
+          imagePath: tujuan,
+          localPhotoName: namaFile,
           prob: hasil.prob,
           types: {...hasil.terdeteksi},
           pakaiStub: hasil.pakaiStub,
@@ -67,7 +77,7 @@ class _S extends State<ReportPhotoScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Laporkan Sampah — Foto')),
+      appBar: AppBar(title: const Text('Foto Laporan Sampah')),
       body: Center(
         child: _sibuk
             ? const CircularProgressIndicator()

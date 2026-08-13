@@ -105,7 +105,12 @@ class BerandaScreen extends StatelessWidget {
               child: const IgnorePointer(
                 child: SizedBox(
                   height: 240,
-                  child: CellMap(interactive: false),
+                  child: IgnorePointer(
+                    child: SizedBox(
+                      height: 240,
+                      child: CellMap(interactive: false, tampilNasional: true),
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -134,7 +139,7 @@ class BerandaScreen extends StatelessWidget {
                   children: [
                     _statCol('Laporan', '${s[0]}'),
                     const VerticalDivider(color: AppColors.line, width: 1),
-                    _statCol('Lokasi Terpantau', '${s[1]}'),
+                    _statCol('Area Terpantau', '${s[1]}'),
                   ],
                 ),
               );
