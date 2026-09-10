@@ -1,7 +1,7 @@
 import 'constants.dart';
 
 /// Konversi koordinat ke indeks grid
-/// Contoh: (-8.0251, 110.3320) -> "-8026_110332"
+/// Contoh: (-8.0251, 110.3320) -> "-8026_110331"
 String computeCellId(double lat, double lng) {
   final latCell = (lat / kCellSizeDeg).floor();
   final lngCell = (lng / kCellSizeDeg).floor();
@@ -15,7 +15,7 @@ class CellBounds {
   double get lngMid => (lngLo + lngHi) / 2;
 }
 
-/// Ubah cellId (contoh "-8026_110332") kembali menjadi kotak geografis
+/// Ubah cellId (contoh "-8026_110331") kembali menjadi kotak geografis
 CellBounds cellBounds(String cellId) {
   final p = cellId.split('_');
   final latCell = int.parse(p[0]);

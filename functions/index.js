@@ -1,18 +1,10 @@
 const { onDocumentCreated } = require("firebase-functions/v2/firestore");
 const { initializeApp } = require("firebase-admin/app");
 const { getFirestore } = require("firebase-admin/firestore");
+const { computeCellId } = require("./geo");
 
 initializeApp();
 const db = getFirestore();
-
-// harus identik dengan kCellSizeDeg di lib/core/constants.dart
-const CELL_SIZE_DEG = 0.001;
-
-function computeCellId(lat, lng) {
-  const latCell = Math.floor(lat / CELL_SIZE_DEG);
-  const lngCell = Math.floor(lng / CELL_SIZE_DEG);
-  return `${latCell}_${lngCell}`;
-}
 
 // Dipicu tiap laporan baru
 // O(1): hanya menyentuh 1 dokumen sel
