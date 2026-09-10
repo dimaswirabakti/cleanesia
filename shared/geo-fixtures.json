@@ -1,0 +1,17 @@
+{
+  "_comment": "Fixture emas paritas geo. harus lolos di Dart, functions (JS), dan dashboard (TS). Jangan edit tanpa mengubah ketiga port.",
+  "cellSizeDeg": 0.001,
+  "computeCellId": [
+    { "lat": -8.0251, "lng": 110.332, "cellId": "-8026_110331" },
+    { "lat": -8.0257, "lng": 110.3336, "cellId": "-8026_110333" },
+    { "lat": -7.9997, "lng": 110.2925, "cellId": "-8000_110292" },
+    { "lat": -8.025, "lng": 110.332, "cellId": "-8025_110331" },
+    { "lat": 0.0, "lng": 0.0, "cellId": "0_0" },
+    { "lat": 5.8811, "lng": 95.3222, "cellId": "5881_95322" }
+  ],
+  "cellBounds": [
+    { "cellId": "-8026_110332", "latLo": -8.026, "latHi": -8.025, "lngLo": 110.33200000000001, "lngHi": 110.333 },
+    { "cellId": "0_0", "latLo": 0.0, "latHi": 0.001, "lngLo": 0.0, "lngHi": 0.001 },
+    { "cellId": "5881_95322", "latLo": 5.881, "latHi": 5.882000000000001, "lngLo": 95.322, "lngHi": 95.32300000000001 }
+  ]
+}
