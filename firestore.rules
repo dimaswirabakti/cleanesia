@@ -1,0 +1,16 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Ringkasan per sel, ditulis hanya oleh Cloud Functions (Admin SDK bypass rules)
+    match /cells/{cellId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+    // Laporan mentah, dibuat mobile (anonim), dibaca dashboard & mobile
+    match /reports/{reportId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null;
+      allow update, delete: if false;
+    }
+  }
+}
