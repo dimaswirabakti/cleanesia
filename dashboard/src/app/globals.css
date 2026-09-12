@@ -52,3 +52,7 @@
     font-family: var(--font-sans);
   }
 }
+
+.cleanesia-tiles {
+  filter: saturate(0.4) brightness(1.03);
+}
