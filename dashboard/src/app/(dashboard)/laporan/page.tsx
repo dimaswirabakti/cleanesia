@@ -82,7 +82,7 @@ export default function LaporanPage() {
               }}
               className={`rounded-full border px-3 py-1 text-body-sm font-medium transition ${
                 types.has(t)
-                  ? "border-transparent bg-brand-500 text-ink"
+                  ? "border-transparent bg-brand-500 text-white"
                   : "border-border text-muted hover:border-brand-500"
               }`}>
               {WASTE_TYPE_LABELS[t]}

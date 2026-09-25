@@ -43,7 +43,7 @@ export default function ReportLocationMap({ report }: { report: Report }) {
         pathOptions={{
           color: "#0c2c2a",
           weight: 2,
-          fillColor: "#00cdbe",
+          fillColor: "#0f8a7e",
           fillOpacity: 1,
         }}
       />

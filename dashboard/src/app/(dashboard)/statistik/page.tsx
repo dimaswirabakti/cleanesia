@@ -21,7 +21,7 @@ import { WASTE_TYPE_LABELS, type WasteType } from "@/lib/types";
 
 const TYPES: WasteType[] = ["plastik", "styrofoam", "logam", "kaca", "jaring"];
 const TYPE_COLOR: Record<WasteType, string> = {
-  plastik: "#00cdbe",
+  plastik: "#0f8a7e",
   styrofoam: "#6c8c28",
   logam: "#c77700",
   kaca: "#0c2c2a",
@@ -181,8 +181,8 @@ export default function StatistikPage() {
                 margin={{ top: 8, right: 8, bottom: 0, left: -16 }}>
                 <defs>
                   <linearGradient id='trendFill' x1='0' y1='0' x2='0' y2='1'>
-                    <stop offset='0%' stopColor='#00cdbe' stopOpacity={0.35} />
-                    <stop offset='100%' stopColor='#00cdbe' stopOpacity={0} />
+                    <stop offset='0%' stopColor='#0f8a7e' stopOpacity={0.35} />
+                    <stop offset='100%' stopColor='#0f8a7e' stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid
@@ -213,10 +213,10 @@ export default function StatistikPage() {
                 <Area
                   type='monotone'
                   dataKey='count'
-                  stroke='#00cdbe'
+                  stroke='#0f8a7e'
                   strokeWidth={2.5}
                   fill='url(#trendFill)'
-                  dot={{ r: 3, fill: "#00cdbe" }}
+                  dot={{ r: 3, fill: "#0f8a7e" }}
                   name='Laporan'
                 />
               </AreaChart>
@@ -315,7 +315,7 @@ export default function StatistikPage() {
                 />
                 <Bar
                   dataKey='count'
-                  fill='#00cdbe'
+                  fill='#0f8a7e'
                   radius={[0, 6, 6, 0]}
                   name='Laporan'
                 />

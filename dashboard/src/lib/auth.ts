@@ -6,18 +6,32 @@ import {
   signOut,
 } from "firebase/auth";
 import { auth } from "./firebase";
+import { ensureUserDoc } from "./users";
 
 const googleProvider = new GoogleAuthProvider();
 
-export function signInWithGoogle() {
-  return signInWithPopup(auth, googleProvider);
+export async function signInWithGoogle() {
+  const cred = await signInWithPopup(auth, googleProvider);
+  await ensureUserDoc(cred.user);
+  return cred;
 }
-export function signInWithEmail(email: string, password: string) {
-  return signInWithEmailAndPassword(auth, email, password);
+
+export async function signInWithEmail(email: string, password: string) {
+  const cred = await signInWithEmailAndPassword(auth, email, password);
+  await ensureUserDoc(cred.user); // jaga-jaga untuk akun lama
+  return cred;
 }
-export function registerWithEmail(email: string, password: string) {
-  return createUserWithEmailAndPassword(auth, email, password);
+
+export async function registerWithEmail(
+  email: string,
+  password: string,
+  displayName: string,
+) {
+  const cred = await createUserWithEmailAndPassword(auth, email, password);
+  await ensureUserDoc(cred.user, displayName);
+  return cred;
 }
+
 export function logout() {
   return signOut(auth);
 }

@@ -3,7 +3,7 @@ import { Cell, Pie, PieChart, ResponsiveContainer } from "recharts";
 import { WASTE_TYPE_LABELS, type WasteType } from "@/lib/types";
 
 const COLORS: Record<WasteType, string> = {
-  plastik: "#00cdbe",
+  plastik: "#0f8a7e",
   styrofoam: "#6c8c28",
   logam: "#c77700",
   kaca: "#0c2c2a",

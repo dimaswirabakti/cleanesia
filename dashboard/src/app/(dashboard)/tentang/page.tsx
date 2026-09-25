@@ -90,7 +90,7 @@ export default function TentangPage() {
         <ol className='mt-5 space-y-6'>
           {STEPS.map((s, i) => (
             <li key={s.title} className='flex gap-4'>
-              <span className='flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-500 text-body-sm font-semibold text-ink'>
+              <span className='flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-500 text-body-sm font-semibold text-white'>
                 {i + 1}
               </span>
               <div>

@@ -1,4 +1,5 @@
 import type { Timestamp } from "firebase/firestore";
+export type UserRole = "pemantau" | "admin";
 
 export type WasteType = "plastik" | "styrofoam" | "logam" | "kaca" | "jaring";
 
@@ -51,4 +52,12 @@ export interface Report {
   reporterId: string;
   thumbnailUrl: string | null;
   localPhotoPath: string | null;
+}
+
+export interface AppUser {
+  uid: string;
+  displayName: string;
+  email: string;
+  role: UserRole;
+  createdAt: Date;
 }

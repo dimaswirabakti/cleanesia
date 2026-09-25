@@ -65,7 +65,7 @@ export default function SeverityMap({
               [b.latHi, b.lngHi],
             ]}
             pathOptions={{
-              color: selected ? "#00cdbe" : "rgba(0,0,0,0.26)",
+              color: selected ? "#0f8a7e" : "rgba(0,0,0,0.26)",
               weight: selected ? 2.5 : 0.5,
               fillColor: v.fillColor,
               fillOpacity: v.fillOpacity,
