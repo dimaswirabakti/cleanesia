@@ -35,7 +35,7 @@ class ProfilScreen extends StatelessWidget {
     'Bantuan',
     'Cara melapor:\n\n'
         '1. Tekan menu Laporkan di navigasi bawah.\n'
-        '2. Foto sampah di lokasi, atau pilih dari galeri.\n'
+        '2. Potret sampah di lokasi dengan kamera ponsel.\n'
         '3. Periksa hasil deteksi jenis sampah, ubah bila perlu.\n'
         '4. Pilih tingkat keparahan, lalu tekan Kirim Laporan.\n\n'
         'Jika sedang tidak ada internet, laporan tersimpan otomatis dan terkirim sendiri begitu '
