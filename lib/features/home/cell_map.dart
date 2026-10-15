@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
@@ -65,31 +66,61 @@ List<Polygon> cellPolygons(Map<String, CellAgg> cells) {
   return out;
 }
 
+/// titik tengah Indonesia untuk tampilan awal nasional
+const _pusatNasional = LatLng(-2.5, 118.0);
+const _zoomNasional = 3.5;
+
+/// lokasi cadangan
+const _pusatCadangan = LatLng(-8.025, 110.332);
+
 class CellMap extends StatefulWidget {
   final bool interactive;
   final void Function(Map<String, CellAgg> cells, LatLng p)? onTapCell;
   final bool ikutiLokasi;
   final bool tampilNasional;
+
+  /// Animasi intro: mulai dari peta nasional, diam sejenak, lalu zoom
+  /// perlahan ke lokasi pengguna dan berhenti di [zoomAkhir].
+  final bool introAnimasi;
+  final double zoomAkhir;
+  final Duration jedaIntro;
+  final Duration durasiIntro;
+
   const CellMap({
     super.key,
     this.interactive = true,
     this.onTapCell,
     this.ikutiLokasi = false,
     this.tampilNasional = false,
+    this.introAnimasi = false,
+    this.zoomAkhir = 12.5,
+    this.jedaIntro = const Duration(seconds: 2),
+    this.durasiIntro = const Duration(milliseconds: 4500),
   });
 
   @override
   State<CellMap> createState() => _CellMapState();
 }
 
-class _CellMapState extends State<CellMap> {
+class _CellMapState extends State<CellMap> with TickerProviderStateMixin {
   final _mapController = MapController();
   LatLng? _lokasi;
+  AnimationController? _introController;
 
   @override
   void initState() {
     super.initState();
-    if (widget.ikutiLokasi) _muatLokasi();
+    if (widget.introAnimasi) {
+      _mainkanIntro();
+    } else if (widget.ikutiLokasi) {
+      _muatLokasi();
+    }
+  }
+
+  @override
+  void dispose() {
+    _introController?.dispose();
+    super.dispose();
   }
 
   Future<void> _muatLokasi() async {
@@ -109,6 +140,74 @@ class _CellMapState extends State<CellMap> {
     } catch (_) {}
   }
 
+  /// Ambil lokasi pengguna, tahan tampilan nasional selama [jedaIntro],
+  /// lalu animasikan zoom perlahan ke sana.
+  Future<void> _mainkanIntro() async {
+    final mulai = DateTime.now();
+    LatLng tujuan = _pusatCadangan;
+
+    try {
+      var izin = await Geolocator.checkPermission();
+      if (izin == LocationPermission.denied) {
+        izin = await Geolocator.requestPermission();
+      }
+      if (izin != LocationPermission.denied &&
+          izin != LocationPermission.deniedForever) {
+        final pos = await Geolocator.getCurrentPosition().timeout(
+          const Duration(seconds: 6),
+        );
+        tujuan = LatLng(pos.latitude, pos.longitude);
+        if (mounted) setState(() => _lokasi = tujuan);
+      }
+    } catch (_) {
+      // biarkan memakai lokasi cadangan
+    }
+
+    // tahan tampilan nasional minimal selama jedaIntro
+    final berlalu = DateTime.now().difference(mulai);
+    final sisa = widget.jedaIntro - berlalu;
+    if (sisa > Duration.zero) await Future.delayed(sisa);
+
+    if (!mounted) return;
+    _animasiKe(tujuan, widget.zoomAkhir);
+  }
+
+  void _animasiKe(LatLng tujuan, double zoomAkhir) {
+    final MapCamera cam;
+    try {
+      cam = _mapController.camera;
+    } catch (_) {
+      // peta belum siap, pindah langsung sebagai cadangan
+      _mapController.move(tujuan, zoomAkhir);
+      return;
+    }
+
+    final latT = Tween(begin: cam.center.latitude, end: tujuan.latitude);
+    final lngT = Tween(begin: cam.center.longitude, end: tujuan.longitude);
+    final zoomT = Tween(begin: cam.zoom, end: zoomAkhir);
+
+    final controller = AnimationController(
+      duration: widget.durasiIntro,
+      vsync: this,
+    );
+    _introController = controller;
+    final anim = CurvedAnimation(parent: controller, curve: Curves.easeInOut);
+
+    controller.addListener(() {
+      _mapController.move(
+        LatLng(latT.evaluate(anim), lngT.evaluate(anim)),
+        zoomT.evaluate(anim),
+      );
+    });
+    controller.addStatusListener((s) {
+      if (s == AnimationStatus.completed) {
+        controller.dispose();
+        if (_introController == controller) _introController = null;
+      }
+    });
+    controller.forward();
+  }
+
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<QuerySnapshot>(
@@ -119,18 +218,18 @@ class _CellMapState extends State<CellMap> {
 
         LatLng center;
         double zoom;
-        if (widget.tampilNasional) {
-          center = const LatLng(-2.5, 118.0); // titik tengah Indonesia
-          zoom = 3.5;
+        if (widget.tampilNasional || widget.introAnimasi) {
+          center = _pusatNasional;
+          zoom = _zoomNasional;
         } else if (widget.ikutiLokasi) {
-          center = _lokasi ?? const LatLng(-8.025, 110.332);
+          center = _lokasi ?? _pusatCadangan;
           zoom = _lokasi != null ? 16 : 5;
         } else if (cells.isNotEmpty) {
           final b = cellBounds(cells.keys.first);
           center = LatLng(b.latMid, b.lngMid);
           zoom = 15;
         } else {
-          center = const LatLng(-8.025, 110.332);
+          center = _pusatCadangan;
           zoom = 15;
         }
 

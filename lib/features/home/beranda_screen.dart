@@ -98,21 +98,11 @@ class BerandaScreen extends StatelessWidget {
             ],
           ),
           const SizedBox(height: AppSpacing.md),
-          GestureDetector(
-            onTap: onLihatPeta,
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(AppSpacing.radius),
-              child: const IgnorePointer(
-                child: SizedBox(
-                  height: 240,
-                  child: IgnorePointer(
-                    child: SizedBox(
-                      height: 240,
-                      child: CellMap(interactive: false, tampilNasional: true),
-                    ),
-                  ),
-                ),
-              ),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(AppSpacing.radius),
+            child: const SizedBox(
+              height: 240,
+              child: CellMap(interactive: true, introAnimasi: true),
             ),
           ),
           const SizedBox(height: AppSpacing.lg),
