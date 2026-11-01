@@ -5,7 +5,7 @@ import { useAuth } from "@/components/AuthProvider";
 import { logout } from "@/lib/auth";
 
 export default function ProfilPage() {
-  const { user, profile, loading } = useAuth();
+  const { user, profile, loading, isAdmin } = useAuth();
 
   if (loading) return <div className='p-8 text-body text-muted'>Memuat...</div>;
 
@@ -19,7 +19,7 @@ export default function ProfilPage() {
         year: "numeric",
       })
     : "—";
-  const roleLabel = profile?.role === "admin" ? "Administrator" : "Pemantau";
+  const roleLabel = isAdmin ? "Administrator" : "Pemantau";
 
   return (
     <div className='mx-auto max-w-3xl space-y-5 p-6 lg:p-8'>
@@ -71,17 +71,16 @@ export default function ProfilPage() {
         <h2 className='text-title font-semibold text-ink'>Hak Akses</h2>
         <div className='mt-4 flex items-start gap-3'>
           <span className='flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-500'>
-            <Eye size={19} />
+            {isAdmin ? <ShieldCheck size={19} /> : <Eye size={19} />}
           </span>
           <div>
             <div className='text-body font-medium text-ink'>
-              Akses baca ({roleLabel})
+              {isAdmin ? "Administrator" : "Akses baca (Pemantau)"}
             </div>
             <p className='mt-1 text-body-sm leading-relaxed text-muted'>
-              Anda dapat melihat seluruh peta keparahan, tabel laporan, dan
-              analitik. Dasbor ini bersifat pemantauan saja, sehingga data
-              laporan warga tidak dapat diubah, dihapus, atau ditambah dari
-              sini.
+              {isAdmin
+                ? "Selain melihat peta keparahan, tabel laporan, dan analitik, Anda dapat memoderasi laporan dan mengelola peran pengguna. Setiap perubahan tercatat dalam jejak audit."
+                : "Anda dapat melihat seluruh peta keparahan, tabel laporan, dan analitik. Peran ini bersifat pemantauan saja, sehingga data laporan warga tidak dapat diubah, dihapus, atau ditambah dari sini."}
             </p>
           </div>
         </div>

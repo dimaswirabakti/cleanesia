@@ -1,6 +1,10 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    function isAdmin() {
+      return request.auth != null && request.auth.token.admin == true;
+    }
+
     // Ringkasan per sel — ditulis hanya oleh Cloud Functions (Admin SDK bypass rules)
     match /cells/{cellId} {
       allow read: if request.auth != null;
@@ -23,6 +27,12 @@ service cloud.firestore {
                     && request.resource.data.role == resource.data.role
                     && request.resource.data.uid == resource.data.uid;
       allow delete: if false;
+    }
+
+    // Jejak aksi admin — hanya admin yang boleh membaca, hanya server yang menulis
+    match /auditLogs/{id} {
+      allow read: if isAdmin();
+      allow write: if false;
     }
   }
 }
