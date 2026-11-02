@@ -31,6 +31,11 @@ export interface ReportDocRaw {
   reporterId: string;
   thumbnailUrl: string | null;
   localPhotoPath: string | null;
+
+  // opsional, dokumen lama tidak punya
+  hidden?: boolean;
+  hiddenReason?: string;
+  hiddenAt?: Timestamp;
 }
 
 // Bentuk yang dipakai UI (Timestamp sudah jadi Date)
@@ -52,6 +57,10 @@ export interface Report {
   reporterId: string;
   thumbnailUrl: string | null;
   localPhotoPath: string | null;
+
+  hidden: boolean;
+  hiddenReason: string | null;
+  hiddenAt: Date | null;
 }
 
 export interface AppUser {

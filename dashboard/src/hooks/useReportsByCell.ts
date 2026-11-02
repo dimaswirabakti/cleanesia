@@ -12,7 +12,7 @@ import { db } from "@/lib/firebase";
 import { mapReport } from "@/lib/mappers";
 import type { Report } from "@/lib/types";
 
-export function useReportsByCell(cellId: string | null) {
+export function useReportsByCell(cellId: string | null, includeHidden = false) {
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
@@ -42,7 +42,10 @@ export function useReportsByCell(cellId: string | null) {
             limit(50),
           ),
         );
-        if (!cancelled) setReports(snap.docs.map(mapReport));
+        if (!cancelled)
+          setReports(
+            snap.docs.map(mapReport).filter((r) => includeHidden || !r.hidden),
+          );
       } catch (e) {
         if (!cancelled) setError(e instanceof Error ? e : new Error(String(e)));
       } finally {
@@ -53,7 +56,7 @@ export function useReportsByCell(cellId: string | null) {
     return () => {
       cancelled = true;
     };
-  }, [cellId]);
+  }, [cellId, includeHidden]);
 
   return { reports, loading, error };
 }

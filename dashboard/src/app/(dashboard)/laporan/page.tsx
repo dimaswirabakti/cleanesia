@@ -5,6 +5,7 @@ import { X } from "lucide-react";
 import { useAllReports } from "@/hooks/useAllReports";
 import { SeverityBadge } from "@/components/SeverityBadge";
 import { WASTE_TYPE_LABELS, type WasteType } from "@/lib/types";
+import { useAuth } from "@/components/AuthProvider";
 
 const TYPES: WasteType[] = ["plastik", "styrofoam", "logam", "kaca", "jaring"];
 const LEVELS = [1, 2, 3, 4, 5];
@@ -25,7 +26,11 @@ function toggle<T>(set: Set<T>, val: T): Set<T> {
 
 export default function LaporanPage() {
   const router = useRouter();
-  const { reports, loading } = useAllReports();
+  const { isAdmin } = useAuth();
+  const { reports, loading } = useAllReports(2000, isAdmin);
+  const [status, setStatus] = useState<"semua" | "tampil" | "tersembunyi">(
+    "semua",
+  );
   const [types, setTypes] = useState<Set<WasteType>>(new Set());
   const [levels, setLevels] = useState<Set<number>>(new Set());
   const [from, setFrom] = useState("");
@@ -40,9 +45,11 @@ export default function LaporanPage() {
       if (levels.size && !levels.has(r.severity)) return false;
       if (fromTs && r.createdAt < fromTs) return false;
       if (toTs && r.createdAt > toTs) return false;
+      if (status === "tampil" && r.hidden) return false;
+      if (status === "tersembunyi" && !r.hidden) return false;
       return true;
     });
-  }, [reports, types, levels, from, to]);
+  }, [reports, types, levels, from, to, status]);
 
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const current = Math.min(page, pageCount - 1);
@@ -50,7 +57,8 @@ export default function LaporanPage() {
     current * PAGE_SIZE,
     current * PAGE_SIZE + PAGE_SIZE,
   );
-  const hasFilter = types.size || levels.size || from || to;
+  const hasFilter =
+    types.size || levels.size || from || to || status !== "semua";
 
   function resetFilters() {
     setTypes(new Set());
@@ -58,6 +66,7 @@ export default function LaporanPage() {
     setFrom("");
     setTo("");
     setPage(0);
+    setStatus("semua");
   }
 
   return (
@@ -139,6 +148,27 @@ export default function LaporanPage() {
             </button>
           ) : null}
         </div>
+
+        {isAdmin && (
+          <div className='flex flex-wrap items-center gap-2'>
+            <span className='w-24 text-body-sm text-muted'>Status:</span>
+            {(["semua", "tampil", "tersembunyi"] as const).map((s) => (
+              <button
+                key={s}
+                onClick={() => {
+                  setStatus(s);
+                  setPage(0);
+                }}
+                className={`rounded-full border px-3 py-1 text-body-sm font-medium capitalize transition ${
+                  status === s
+                    ? "border-transparent bg-brand-500 text-white"
+                    : "border-border text-muted hover:border-brand-500"
+                }`}>
+                {s}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className='text-body-sm text-muted'>
@@ -162,9 +192,19 @@ export default function LaporanPage() {
               <tr
                 key={r.id}
                 onClick={() => router.push(`/laporan/${r.id}`)}
-                className='cursor-pointer border-b border-border last:border-0 hover:bg-brand-50'>
+                className={`cursor-pointer border-b border-border last:border-0 hover:bg-brand-50 ${r.hidden ? "opacity-60" : ""}`}>
                 <td className='px-4 py-3 font-mono text-body-sm text-brand-500'>
                   {r.id.slice(0, 6).toUpperCase()}
+                  {r.hidden && (
+                    <span
+                      className='ml-2 rounded-full px-2 py-0.5 font-sans text-caption font-medium'
+                      style={{
+                        backgroundColor: "#d93a3f1F",
+                        color: "#d93a3f",
+                      }}>
+                      Tersembunyi
+                    </span>
+                  )}
                 </td>
                 <td className='px-4 py-3 font-mono text-body-sm text-ink'>
                   {r.createdAt.toLocaleString("id-ID", {

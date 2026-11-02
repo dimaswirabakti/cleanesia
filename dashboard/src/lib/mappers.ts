@@ -26,5 +26,8 @@ export function mapReport(snap: QueryDocumentSnapshot<DocumentData>): Report {
     reporterId: (d.reporterId as string) ?? "",
     thumbnailUrl: (d.thumbnailUrl as string | null) ?? null,
     localPhotoPath: (d.localPhotoPath as string | null) ?? null,
+    hidden: d.hidden === true,
+    hiddenReason: (d.hiddenReason as string | undefined) ?? null,
+    hiddenAt: d.hiddenAt?.toDate?.() ?? null,
   };
 }

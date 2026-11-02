@@ -20,16 +20,19 @@ async function requireAdmin(request) {
   return rec;
 }
 
-/** Catat setiap aksi admin ke auditLogs (hanya bisa ditulis server). */
-async function writeAudit(actor, action, target, details = {}) {
-  await db.collection("auditLogs").add({
+/** Catat aksi admin ke auditLogs. Bila `tx` diberikan, ditulis dalam transaksi itu. */
+async function writeAudit(actor, action, target, details = {}, tx = null) {
+  const ref = db.collection("auditLogs").doc();
+  const data = {
     actorUid: actor.uid,
     actorEmail: actor.email ?? null,
     action,
     target,
     details,
     at: FieldValue.serverTimestamp(),
-  });
+  };
+  if (tx) tx.set(ref, data);
+  else await ref.set(data);
 }
 
 module.exports = { db, requireAdmin, writeAudit };

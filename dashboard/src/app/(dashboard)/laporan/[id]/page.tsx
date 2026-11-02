@@ -6,6 +6,8 @@ import { ArrowLeft, ImageOff } from "lucide-react";
 import { useReport } from "@/hooks/useReport";
 import { SeverityBadge } from "@/components/SeverityBadge";
 import { WASTE_TYPE_LABELS } from "@/lib/types";
+import { useAuth } from "@/components/AuthProvider";
+import { ModerationPanel } from "@/components/ModerationPanel";
 
 const ReportLocationMap = dynamic(
   () => import("@/components/map/ReportLocationMap"),
@@ -37,7 +39,8 @@ function Row({
 export default function DetailLaporanPage() {
   const params = useParams<{ id: string }>();
   const id = params?.id ?? null;
-  const { report, loading, notFound } = useReport(id);
+  const { isAdmin } = useAuth();
+  const { report, loading, notFound, reload } = useReport(id);
 
   return (
     <div className='mx-auto max-w-4xl space-y-6 p-6 lg:p-8'>
@@ -49,7 +52,7 @@ export default function DetailLaporanPage() {
 
       {loading ? (
         <div className='text-body text-muted'>Memuat...</div>
-      ) : notFound || !report ? (
+      ) : notFound || !report || (report.hidden && !isAdmin) ? (
         <div className='rounded-xl border border-border bg-surface p-10 text-center'>
           <div className='text-title font-semibold text-ink'>
             Laporan tidak ditemukan
@@ -78,6 +81,8 @@ export default function DetailLaporanPage() {
             </div>
             <SeverityBadge level={report.severity} />
           </div>
+
+          {isAdmin && <ModerationPanel report={report} onChanged={reload} />}
 
           <div className='grid grid-cols-1 gap-6 lg:grid-cols-2'>
             <div className='rounded-xl border border-border bg-surface p-5'>

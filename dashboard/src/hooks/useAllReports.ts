@@ -5,7 +5,7 @@ import { db } from "@/lib/firebase";
 import { mapReport } from "@/lib/mappers";
 import type { Report } from "@/lib/types";
 
-export function useAllReports(cap = 2000) {
+export function useAllReports(cap = 2000, includeHidden = false) {
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -22,7 +22,10 @@ export function useAllReports(cap = 2000) {
             limit(cap),
           ),
         );
-        if (!cancelled) setReports(snap.docs.map(mapReport));
+        if (!cancelled)
+          setReports(
+            snap.docs.map(mapReport).filter((r) => includeHidden || !r.hidden),
+          );
       } catch (e) {
         if (!cancelled) setError(e instanceof Error ? e : new Error(String(e)));
       } finally {
@@ -32,7 +35,7 @@ export function useAllReports(cap = 2000) {
     return () => {
       cancelled = true;
     };
-  }, [cap]);
+  }, [cap, includeHidden]);
 
   return { reports, loading, error };
 }
