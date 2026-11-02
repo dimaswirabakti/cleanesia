@@ -13,3 +13,8 @@ export const setUserRole = httpsCallable<
   { uid: string; role: UserRole },
   { changed: boolean; role: UserRole }
 >(fns, "setUserRole");
+
+export const setReportHidden = httpsCallable<
+  { reportId: string; hidden: boolean; reason?: string },
+  { changed: boolean; hidden: boolean }
+>(fns, "setReportHidden");

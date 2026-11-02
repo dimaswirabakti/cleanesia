@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   doc,
   getDoc,
@@ -15,6 +15,7 @@ export function useReport(id: string | null) {
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [error, setError] = useState<Error | null>(null);
+  const [tick, setTick] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -45,7 +46,9 @@ export function useReport(id: string | null) {
     return () => {
       cancelled = true;
     };
-  }, [id]);
+  }, [id, tick]);
 
-  return { report, loading, notFound, error };
+  const reload = useCallback(() => setTick((t) => t + 1), []);
+
+  return { report, loading, notFound, error, reload };
 }

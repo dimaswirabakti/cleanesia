@@ -4,6 +4,7 @@ import { useReportsByCell } from "@/hooks/useReportsByCell";
 import { SeverityBadge } from "@/components/SeverityBadge";
 import { WASTE_TYPE_LABELS, type Cell } from "@/lib/types";
 import { cellCenter } from "@/lib/geo";
+import { useAuth } from "@/components/AuthProvider";
 
 export function CellPanel({
   cell,
@@ -12,7 +13,8 @@ export function CellPanel({
   cell: Cell | null;
   onClose: () => void;
 }) {
-  const { reports, loading } = useReportsByCell(cell?.cellId ?? null);
+  const { isAdmin } = useAuth();
+  const { reports, loading } = useReportsByCell(cell?.cellId ?? null, isAdmin);
 
   if (!cell) {
     return (
@@ -73,16 +75,23 @@ export function CellPanel({
         ) : (
           <ul className='space-y-2'>
             {reports.map((r) => (
-              <li key={r.id} className='rounded-lg border border-border p-3'>
+              <li
+                key={r.id}
+                className={`rounded-lg border border-border p-3 ${r.hidden ? "opacity-60" : ""}`}>
                 <div className='flex items-center justify-between'>
                   <SeverityBadge level={r.severity} />
-                  <span className='font-mono text-caption text-muted'>
+                  <span className='flex items-center gap-2 font-mono text-caption text-muted'>
+                    {r.hidden && (
+                      <span
+                        className='font-sans font-medium'
+                        style={{ color: "#d93a3f" }}>
+                        Tersembunyi
+                      </span>
+                    )}
                     {r.createdAt.toLocaleDateString("id-ID")}
                   </span>
                 </div>
-                <div className='mt-2 text-body-sm text-ink'>
-                  {r.types.map((t) => WASTE_TYPE_LABELS[t]).join(", ") || "—"}
-                </div>
+                {/* baris jenis sampah tetap */}
               </li>
             ))}
           </ul>

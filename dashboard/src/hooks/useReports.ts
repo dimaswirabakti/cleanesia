@@ -48,7 +48,7 @@ export function useReports(pageSize = 20) {
         if (cancelled) return;
         cursor.current = snap.docs.at(-1) ?? null;
         setHasMore(snap.size === pageSize);
-        setReports(snap.docs.map(mapReport));
+        setReports(snap.docs.map(mapReport).filter((r) => !r.hidden));
       } catch (e) {
         if (!cancelled) setError(e instanceof Error ? e : new Error(String(e)));
       } finally {
@@ -68,7 +68,10 @@ export function useReports(pageSize = 20) {
       const snap = await queryPage(cursor.current);
       cursor.current = snap.docs.at(-1) ?? cursor.current;
       setHasMore(snap.size === pageSize);
-      setReports((prev) => [...prev, ...snap.docs.map(mapReport)]);
+      setReports((prev) => [
+        ...prev,
+        ...snap.docs.map(mapReport).filter((r) => !r.hidden),
+      ]);
     } catch (e) {
       setError(e instanceof Error ? e : new Error(String(e)));
     } finally {
