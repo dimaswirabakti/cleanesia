@@ -7,6 +7,7 @@ import {
   FileText,
   BarChart3,
   Info,
+  History,
   LogOut,
   ChevronRight,
 } from "lucide-react";
@@ -22,9 +23,12 @@ const NAV = [
   { href: "/tentang", label: "Tentang", icon: Info },
 ];
 
+const ADMIN_NAV = [{ href: "/audit", label: "Jejak Audit", icon: History }];
+
 export function AppSidebar({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
-  const { user, profile } = useAuth();
+  const { user, profile, isAdmin } = useAuth();
+  const items = isAdmin ? [...NAV, ...ADMIN_NAV] : NAV;
 
   return (
     <div className='flex h-full flex-col bg-surface'>
@@ -40,7 +44,7 @@ export function AppSidebar({ onNavigate }: { onNavigate?: () => void }) {
       </div>
 
       <nav className='flex-1 space-y-1 px-3 py-4'>
-        {NAV.map(({ href, label, icon: Icon }) => {
+        {items.map(({ href, label, icon: Icon }) => {
           const active = pathname === href || pathname.startsWith(href + "/");
           return (
             <Link
