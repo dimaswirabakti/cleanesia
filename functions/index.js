@@ -45,3 +45,6 @@ exports.agregasiLaporan = onDocumentCreated("reports/{id}", async (event) => {
 const adminFns = require("./admin");
 exports.setUserRole = adminFns.setUserRole;
 exports.adminPing = adminFns.adminPing;
+
+const reportFns = require("./reports");
+exports.setReportHidden = reportFns.setReportHidden;
