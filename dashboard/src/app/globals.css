@@ -19,6 +19,9 @@
   --color-severity-4: #d0581f;
   --color-severity-5: #d93a3f;
 
+  /* Bahaya / error (sama dengan keparahan tertinggi) */
+  --color-danger: #d93a3f;
+
   /* Sel belum terpantau */
   --color-unmonitored: #9aa8a5;
 

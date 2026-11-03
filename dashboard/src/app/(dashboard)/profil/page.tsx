@@ -101,8 +101,7 @@ export default function ProfilPage() {
           </div>
           <button
             onClick={() => logout()}
-            className='rounded-xl px-4 py-2 text-body-sm font-semibold'
-            style={{ backgroundColor: "#d93a3f1F", color: "#d93a3f" }}>
+            className='rounded-xl px-4 py-2 text-body-sm font-semibold bg-danger/10 text-danger'>
             Keluar
           </button>
         </div>

@@ -1,11 +1,5 @@
 "use client";
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-  useCallback,
-} from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import { onAuthStateChanged, type User } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { ensureUserDoc, getUserDoc } from "@/lib/users";
@@ -17,9 +11,6 @@ type AuthState = {
   /** true bila token memuat claim admin (sumber kebenaran role). Hanya untuk UI; server tetap memverifikasi sendiri. */
   isAdmin: boolean;
   loading: boolean;
-  refreshProfile: () => Promise<void>;
-  /** Paksa ambil token baru, dipakai setelah role berubah. */
-  refreshClaims: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthState>({
@@ -27,8 +18,6 @@ const AuthContext = createContext<AuthState>({
   profile: null,
   isAdmin: false,
   loading: true,
-  refreshProfile: async () => {},
-  refreshClaims: async () => {},
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -54,26 +43,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [],
   );
 
-  const refreshProfile = useCallback(async () => {
-    if (auth.currentUser) setProfile(await getUserDoc(auth.currentUser.uid));
-  }, []);
-
-  const refreshClaims = useCallback(async () => {
-    const u = auth.currentUser;
-    if (!u) return;
-    setIsAdmin((await u.getIdTokenResult(true)).claims.admin === true);
-  }, []);
-
   return (
     <AuthContext.Provider
-      value={{
-        user,
-        profile,
-        isAdmin,
-        loading,
-        refreshProfile,
-        refreshClaims,
-      }}>
+      value={{ user, profile, isAdmin, loading }}>
       {children}
     </AuthContext.Provider>
   );

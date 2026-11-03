@@ -10,8 +10,6 @@ const PRESETS = [
   "Lokasi tidak valid",
   "Isi laporan tidak sesuai",
 ];
-const DANGER = { backgroundColor: "#d93a3f1F", color: "#d93a3f" };
-
 export function ModerationPanel({
   report,
   onChanged,
@@ -46,11 +44,10 @@ export function ModerationPanel({
   if (report.hidden) {
     return (
       <div
-        className='rounded-xl border p-4'
-        style={{ borderColor: "#d93a3f55", backgroundColor: "#d93a3f0F" }}>
+        className='rounded-xl border border-danger/30 bg-danger/5 p-4'>
         <div className='flex flex-wrap items-start justify-between gap-3'>
           <div className='flex items-start gap-3'>
-            <EyeOff size={20} style={{ color: "#d93a3f" }} className='mt-0.5' />
+            <EyeOff size={20} className='mt-0.5 text-danger' />
             <div>
               <div className='text-body font-semibold text-ink'>
                 Laporan ini disembunyikan
@@ -83,7 +80,7 @@ export function ModerationPanel({
           </button>
         </div>
         {error && (
-          <p className='mt-2 text-body-sm' style={{ color: "#d93a3f" }}>
+          <p className='mt-2 text-body-sm text-danger'>
             {error}
           </p>
         )}
@@ -104,8 +101,7 @@ export function ModerationPanel({
         {!open && (
           <button
             onClick={() => setOpen(true)}
-            className='flex items-center gap-2 rounded-xl px-4 py-2 text-body-sm font-semibold'
-            style={DANGER}>
+            className='flex items-center gap-2 rounded-xl px-4 py-2 text-body-sm font-semibold bg-danger/10 text-danger'>
             <EyeOff size={16} /> Sembunyikan laporan
           </button>
         )}
@@ -135,7 +131,7 @@ export function ModerationPanel({
             className='w-full rounded-lg border border-border bg-surface px-3 py-2 text-body-sm text-ink focus:border-brand-500 focus:outline-none'
           />
           {error && (
-            <p className='text-body-sm' style={{ color: "#d93a3f" }}>
+            <p className='text-body-sm text-danger'>
               {error}
             </p>
           )}
@@ -143,8 +139,7 @@ export function ModerationPanel({
             <button
               disabled={busy || reason.trim().length < 3}
               onClick={() => run(true)}
-              className='rounded-xl px-4 py-2 text-body-sm font-semibold disabled:opacity-50'
-              style={DANGER}>
+              className='rounded-xl px-4 py-2 text-body-sm font-semibold disabled:opacity-50 bg-danger/10 text-danger'>
               {busy ? "Memproses..." : "Konfirmasi sembunyikan"}
             </button>
             <button

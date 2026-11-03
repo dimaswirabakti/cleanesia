@@ -4,11 +4,17 @@ import Link from "next/link";
 import { useMemo } from "react";
 import { ArrowRight } from "lucide-react";
 import { useCells } from "@/hooks/useCells";
-import { useReports } from "@/hooks/useReports";
+import { useRecentReports } from "@/hooks/useRecentReports";
 import { useDashboardStats } from "@/hooks/useDashboardStats";
 import { CompositionDonut } from "@/components/CompositionDonut";
 import { SeverityBadge } from "@/components/SeverityBadge";
+import { ErrorNotice } from "@/components/StateNotice";
 import { WASTE_TYPE_LABELS } from "@/lib/types";
+import {
+  SEVERITY_COLOR,
+  SEVERITY_LABEL,
+  SEVERITY_LEVELS,
+} from "@/lib/palette";
 
 const SeverityMap = dynamic(() => import("@/components/map/SeverityMap"), {
   ssr: false,
@@ -18,22 +24,6 @@ const SeverityMap = dynamic(() => import("@/components/map/SeverityMap"), {
     </div>
   ),
 });
-
-const LEVELS = [1, 2, 3, 4, 5];
-const LEVEL_LABEL: Record<number, string> = {
-  1: "Sangat Rendah",
-  2: "Rendah",
-  3: "Sedang",
-  4: "Tinggi",
-  5: "Sangat Tinggi",
-};
-const LEVEL_COLOR: Record<number, string> = {
-  1: "#12a150",
-  2: "#6c8c28",
-  3: "#c77700",
-  4: "#d0581f",
-  5: "#d93a3f",
-};
 
 function Kpi({
   label,
@@ -65,9 +55,14 @@ function Kpi({
 }
 
 export default function BerandaPage() {
-  const { cells } = useCells();
-  const { stats, loading: statsLoading } = useDashboardStats();
-  const { reports } = useReports(8);
+  const { cells, error: cellsError } = useCells();
+  const {
+    stats,
+    loading: statsLoading,
+    error: statsError,
+  } = useDashboardStats();
+  const { reports, error: reportsError } = useRecentReports(8);
+  const loadError = cellsError ?? statsError ?? reportsError;
 
   const priorityCells = useMemo(
     () => cells.filter((c) => c.latestSeverity >= 4).length,
@@ -89,6 +84,8 @@ export default function BerandaPage() {
           Ringkasan pemantauan sampah pesisir, diperbarui secara real-time.
         </p>
       </div>
+
+      {loadError && <ErrorNotice what='ringkasan' error={loadError} />}
 
       {/* KPI */}
       <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4'>
@@ -128,15 +125,15 @@ export default function BerandaPage() {
             />
           </div>
           <ul className='mt-4 flex flex-wrap gap-x-5 gap-y-2'>
-            {LEVELS.map((l) => (
+            {SEVERITY_LEVELS.map((l) => (
               <li
                 key={l}
                 className='flex items-center gap-1.5 text-caption text-ink'>
                 <span
                   className='h-3 w-3 rounded-sm'
-                  style={{ backgroundColor: LEVEL_COLOR[l] }}
+                  style={{ backgroundColor: SEVERITY_COLOR[l] }}
                 />
-                L{l} · {LEVEL_LABEL[l]}
+                L{l} · {SEVERITY_LABEL[l]}
               </li>
             ))}
           </ul>

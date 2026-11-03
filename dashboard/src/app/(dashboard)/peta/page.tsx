@@ -4,6 +4,15 @@ import { useMemo, useState } from "react";
 import { useCells } from "@/hooks/useCells";
 import { WASTE_TYPE_LABELS, type Cell, type WasteType } from "@/lib/types";
 import { CellPanel } from "@/components/map/CellPanel";
+import { ErrorNotice } from "@/components/StateNotice";
+
+import {
+  SEVERITY_COLOR,
+  SEVERITY_LABEL,
+  SEVERITY_LEVELS,
+  WASTE_TYPES,
+} from "@/lib/palette";
+import { toggle } from "@/lib/sets";
 
 const SeverityMap = dynamic(() => import("@/components/map/SeverityMap"), {
   ssr: false,
@@ -14,31 +23,8 @@ const SeverityMap = dynamic(() => import("@/components/map/SeverityMap"), {
   ),
 });
 
-const LEVELS = [1, 2, 3, 4, 5];
-const LEVEL_LABEL: Record<number, string> = {
-  1: "Sangat Rendah",
-  2: "Rendah",
-  3: "Sedang",
-  4: "Tinggi",
-  5: "Sangat Tinggi",
-};
-const LEVEL_COLOR: Record<number, string> = {
-  1: "#12a150",
-  2: "#6c8c28",
-  3: "#c77700",
-  4: "#d0581f",
-  5: "#d93a3f",
-};
-const TYPES: WasteType[] = ["plastik", "styrofoam", "logam", "kaca", "jaring"];
-
-function toggle<T>(set: Set<T>, val: T): Set<T> {
-  const next = new Set(set);
-  next.has(val) ? next.delete(val) : next.add(val);
-  return next;
-}
-
 export default function PetaPage() {
-  const { cells } = useCells();
+  const { cells, error } = useCells();
   const [levels, setLevels] = useState<Set<number>>(new Set());
   const [types, setTypes] = useState<Set<WasteType>>(new Set());
   const [selected, setSelected] = useState<Cell | null>(null);
@@ -61,7 +47,7 @@ export default function PetaPage() {
 
         <div className='flex items-center gap-2'>
           <span className='text-body-sm text-muted'>Filter tingkat:</span>
-          {LEVELS.map((l) => (
+          {SEVERITY_LEVELS.map((l) => (
             <button
               key={l}
               onClick={() => setLevels((s) => toggle(s, l))}
@@ -71,7 +57,7 @@ export default function PetaPage() {
                   : "border-border text-muted hover:border-brand-500"
               }`}
               style={
-                levels.has(l) ? { backgroundColor: LEVEL_COLOR[l] } : undefined
+                levels.has(l) ? { backgroundColor: SEVERITY_COLOR[l] } : undefined
               }>
               L{l}
             </button>
@@ -80,7 +66,7 @@ export default function PetaPage() {
 
         <div className='flex items-center gap-2'>
           <span className='text-body-sm text-muted'>Jenis:</span>
-          {TYPES.map((t) => (
+          {WASTE_TYPES.map((t) => (
             <button
               key={t}
               onClick={() => setTypes((s) => toggle(s, t))}
@@ -95,6 +81,12 @@ export default function PetaPage() {
         </div>
       </div>
 
+      {error && (
+        <div className='px-6 pt-3'>
+          <ErrorNotice what='data peta' error={error} />
+        </div>
+      )}
+
       {/* Body */}
       <div className='flex min-h-0 flex-1'>
         <div className='relative min-w-0 flex-1'>
@@ -103,16 +95,16 @@ export default function PetaPage() {
               Tingkat Keparahan
             </div>
             <ul className='space-y-1.5'>
-              {LEVELS.map((l) => (
+              {SEVERITY_LEVELS.map((l) => (
                 <li
                   key={l}
                   className='flex items-center gap-2 text-body-sm text-ink'>
                   <span
                     className='flex h-5 w-5 items-center justify-center rounded text-caption font-bold text-white'
-                    style={{ backgroundColor: LEVEL_COLOR[l] }}>
+                    style={{ backgroundColor: SEVERITY_COLOR[l] }}>
                     {l}
                   </span>
-                  {LEVEL_LABEL[l]}
+                  {SEVERITY_LABEL[l]}
                 </li>
               ))}
             </ul>

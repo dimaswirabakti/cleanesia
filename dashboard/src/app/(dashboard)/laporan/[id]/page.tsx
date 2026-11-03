@@ -8,6 +8,8 @@ import { SeverityBadge } from "@/components/SeverityBadge";
 import { WASTE_TYPE_LABELS } from "@/lib/types";
 import { useAuth } from "@/components/AuthProvider";
 import { ModerationPanel } from "@/components/ModerationPanel";
+import { ErrorNotice } from "@/components/StateNotice";
+
 
 const ReportLocationMap = dynamic(
   () => import("@/components/map/ReportLocationMap"),
@@ -40,7 +42,7 @@ export default function DetailLaporanPage() {
   const params = useParams<{ id: string }>();
   const id = params?.id ?? null;
   const { isAdmin } = useAuth();
-  const { report, loading, notFound, reload } = useReport(id);
+  const { report, loading, notFound, error, reload } = useReport(id);
 
   return (
     <div className='mx-auto max-w-4xl space-y-6 p-6 lg:p-8'>
@@ -52,6 +54,8 @@ export default function DetailLaporanPage() {
 
       {loading ? (
         <div className='text-body text-muted'>Memuat...</div>
+      ) : error ? (
+        <ErrorNotice what='laporan' error={error} />
       ) : notFound || !report || (report.hidden && !isAdmin) ? (
         <div className='rounded-xl border border-border bg-surface p-10 text-center'>
           <div className='text-title font-semibold text-ink'>

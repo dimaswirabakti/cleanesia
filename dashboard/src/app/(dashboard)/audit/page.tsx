@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { RequireAdmin } from "@/components/RequireAdmin";
 import { useAuditLogs, type AuditLog } from "@/hooks/useAuditLogs";
+import { ErrorNotice, TableSkeleton } from "@/components/StateNotice";
 
 const ACTION_LABEL: Record<string, string> = {
   bootstrapAdmin: "Admin pertama diatur",
@@ -44,11 +45,7 @@ function AuditContent() {
         </p>
       </div>
 
-      {error && (
-        <div className='text-body-sm' style={{ color: "#d93a3f" }}>
-          Gagal memuat jejak audit: {error.message}
-        </div>
-      )}
+      {error && <ErrorNotice what='jejak audit' error={error} />}
 
       <div className='overflow-x-auto rounded-xl border border-border bg-surface'>
         <table className='w-full min-w-[720px] text-left'>
@@ -62,6 +59,7 @@ function AuditContent() {
             </tr>
           </thead>
           <tbody>
+            {loading && <TableSkeleton cols={5} />}
             {logs.map((a) => (
               <tr key={a.id} className='border-b border-border last:border-0'>
                 <td className='px-4 py-3 font-mono text-body-sm text-ink'>

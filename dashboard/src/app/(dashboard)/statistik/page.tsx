@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   Area,
   AreaChart,
@@ -15,35 +15,25 @@ import {
   CartesianGrid,
 } from "recharts";
 import { useAllReports } from "@/hooks/useAllReports";
+import { ErrorNotice } from "@/components/StateNotice";
+
 import { useCells } from "@/hooks/useCells";
 import { cellCenter } from "@/lib/geo";
-import { WASTE_TYPE_LABELS, type WasteType } from "@/lib/types";
+import { WASTE_TYPE_LABELS } from "@/lib/types";
+import {
+  SEVERITY_COLOR,
+  SEVERITY_LABEL,
+  SEVERITY_LEVELS,
+  WASTE_TYPES,
+  WASTE_TYPE_COLOR,
+} from "@/lib/palette";
 
-const TYPES: WasteType[] = ["plastik", "styrofoam", "logam", "kaca", "jaring"];
-const TYPE_COLOR: Record<WasteType, string> = {
-  plastik: "#0f8a7e",
-  styrofoam: "#6c8c28",
-  logam: "#c77700",
-  kaca: "#0c2c2a",
-  jaring: "#d0581f",
-};
-const SEV = [
-  {
-    level: 1,
-    label: "Sangat Rendah",
-    short: "Sangat Rendah",
-    color: "#12a150",
-  },
-  { level: 2, label: "Rendah", short: "Rendah", color: "#6c8c28" },
-  { level: 3, label: "Sedang", short: "Sedang", color: "#c77700" },
-  { level: 4, label: "Tinggi", short: "Tinggi", color: "#d0581f" },
-  {
-    level: 5,
-    label: "Sangat Tinggi",
-    short: "Sangat Tinggi",
-    color: "#d93a3f",
-  },
-];
+const SEV = SEVERITY_LEVELS.map((level) => ({
+  level,
+  label: SEVERITY_LABEL[level],
+  short: SEVERITY_LABEL[level],
+  color: SEVERITY_COLOR[level],
+}));
 
 function KpiCard({ label, value }: { label: string; value: string | number }) {
   return (
@@ -73,8 +63,8 @@ function ChartCard({
 }
 
 export default function StatistikPage() {
-  const { reports, loading } = useAllReports();
-  const { cells } = useCells();
+  const { reports, loading, error } = useAllReports();
+  const { cells, error: cellsError } = useCells();
   const [now] = useState(() => Date.now());
 
   const s = useMemo(() => {
@@ -91,10 +81,10 @@ export default function StatistikPage() {
     }
 
     // Komposisi jenis
-    const compRaw = TYPES.map((t) => ({
+    const compRaw = WASTE_TYPES.map((t) => ({
       type: t,
       label: WASTE_TYPE_LABELS[t],
-      color: TYPE_COLOR[t],
+      color: WASTE_TYPE_COLOR[t],
       value: reports.filter((r) => r.types.includes(t)).length,
     }));
     const compTotal = compRaw.reduce((a, b) => a + b.value, 0) || 1;
@@ -159,6 +149,10 @@ export default function StatistikPage() {
           Visualisasi data pemantauan sampah pesisir Indonesia.
         </p>
       </div>
+
+      {(error ?? cellsError) && (
+        <ErrorNotice what='data statistik' error={(error ?? cellsError)!} />
+      )}
 
       {/* KPI */}
       <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4'>
