@@ -10,6 +10,7 @@ import {
   History,
   LogOut,
   ChevronRight,
+  Users,
 } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
 import { logout } from "@/lib/auth";
@@ -23,7 +24,10 @@ const NAV = [
   { href: "/tentang", label: "Tentang", icon: Info },
 ];
 
-const ADMIN_NAV = [{ href: "/audit", label: "Jejak Audit", icon: History }];
+const ADMIN_NAV = [
+  { href: "/pengguna", label: "Pengguna", icon: Users },
+  { href: "/audit", label: "Jejak Audit", icon: History },
+];
 
 export function AppSidebar({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();

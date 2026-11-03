@@ -20,7 +20,8 @@ service cloud.firestore {
 
     // Profil pemantau
     match /users/{uid} {
-      allow read: if request.auth != null && request.auth.uid == uid;
+      allow read: if request.auth != null
+              && (request.auth.uid == uid || isAdmin());
       allow create: if request.auth != null && request.auth.uid == uid
                     && request.resource.data.role == 'pemantau';
       allow update: if request.auth != null && request.auth.uid == uid
