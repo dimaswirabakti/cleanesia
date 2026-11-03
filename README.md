@@ -11,6 +11,7 @@
 <p align="center">
   <img src="https://img.shields.io/badge/Platform-Android%20%7C%20iOS-00897F" alt="Platform"/>
   <img src="https://img.shields.io/badge/Flutter-Dart-00B4A7" alt="Flutter"/>
+  <img src="https://img.shields.io/badge/Dasbor-Next.js%20%7C%20Vercel-0F8A7E" alt="Dasbor Web"/>
   <img src="https://img.shields.io/badge/AI-On--Device%20TFLite-04554F" alt="AI"/>
   <img src="https://img.shields.io/badge/GEMASTIK-XIX%202026-0C2C2A" alt="GEMASTIK"/>
 </p>
@@ -21,7 +22,7 @@
 
 Cleanesia menjadikan warga pesisir sebagai jaringan pelapor terdistribusi untuk memetakan sebaran sampah laut di Indonesia. Warga cukup memotret sampah di pantai, model kecerdasan buatan yang berjalan langsung di ponsel mengenali jenis sampah pada foto tanpa memerlukan koneksi internet. Setiap laporan digabungkan menjadi peta kepadatan per area yang membantu komunitas kebersihan pantai dan pemerintah menentukan lokasi prioritas pembersihan.
 
-Aplikasi ini dikembangkan untuk **GEMASTIK XIX 2026, Divisi Pengembangan Perangkat Lunak**.
+Data yang terkumpul dapat dipantau melalui **dasbor web** (peta keparahan, tabel laporan, statistik) yang dilengkapi alat moderasi untuk admin, sehingga pengelola dapat menyaring laporan yang tidak layak tanpa merusak peta.
 
 > Cleanesia berkontribusi pada Tujuan Pembangunan Berkelanjutan (SDG) nomor 14, Ekosistem Lautan, dengan mengurangi hambatan ketersediaan data lapangan dalam pemantauan sampah laut.
 
@@ -44,6 +45,9 @@ Aplikasi ini dikembangkan untuk **GEMASTIK XIX 2026, Divisi Pengembangan Perangk
 - **Mode offline.** Laporan yang dibuat tanpa sinyal disimpan di antrean lokal dan tersinkron otomatis begitu perangkat kembali daring.
 - **Riwayat & status sinkronisasi.** Pengguna dapat memantau laporannya sendiri beserta status "Terkirim" atau "Menunggu sinkron".
 - **Lintas platform.** Satu basis kode berjalan di Android dan iOS.
+- **Dasbor web pemantauan.** Peta keparahan per sel, tabel dan detail laporan dengan filter, serta statistik (tren, komposisi jenis sampah, distribusi keparahan, area dengan laporan terbanyak). Pemantau masuk dengan Google atau email.
+- **Moderasi laporan oleh admin.** Admin dapat menyembunyikan dan memulihkan laporan (misalnya data uji coba, spam, atau lokasi tidak valid). Peta langsung terkoreksi ke laporan terlihat berikutnya, dan laporan yang disembunyikan tetap tampak bagi admin dengan penanda.
+- **Pengelolaan peran dan jejak audit.** Admin mengatur peran pengguna dasbor, dan setiap aksi admin tercatat dalam jejak audit yang hanya dapat ditulis server.
 
 ---
 
@@ -58,6 +62,7 @@ Arsitektur Cleanesia memisahkan dua lapisan kerja: klasifikasi yang berjalan di 
 1. **Ponsel (offline mode):** foto diambil, model TFLite mengklasifikasi jenis sampah, pengguna mengoreksi dan menetapkan keparahan, lalu laporan masuk ke antrean lokal.
 2. **Sinkronisasi:** saat daring, laporan terkirim otomatis ke Firebase.
 3. **Server:** Cloud Firestore menyimpan laporan; Cloud Functions memperbarui data per sel dengan keparahan laporan terbaru; aplikasi membaca data sel yang ringan untuk menampilkan peta.
+4. **Dasbor web:** membaca koleksi yang sama langsung dari Firestore. Semua perubahan oleh admin (menyembunyikan laporan, mengubah peran) hanya lewat Cloud Functions *callable* yang memverifikasi peran admin di server; *Security Rules* melarang penulisan langsung ke laporan dan sel.
 
 ---
 
@@ -93,10 +98,11 @@ Model dibangun dengan *transfer learning* dari **MobileNetV3-Small**, dilatih pa
 
 ## Logika Peta Sel
 
-- Koordinat tiap laporan dikuantisasi ke **sel grid** (~100 m).
+- Koordinat tiap laporan dikuantisasi ke **sel grid** 0,001° (~111 m).
 - Warna sel = **keparahan laporan terbaru** pada sel itu (bukan rata-rata, bukan jumlah laporan).
 - Kesegaran warna **memudar** seiring bertambahnya umur laporan.
-- Sel yang melewati ambang basi ditandai **abu-abu (belum terpantau)**.
+- Sel yang melewati ambang basi (21 hari) ditandai **abu-abu (belum terpantau)**.
+- Laporan yang **disembunyikan admin** tidak dihitung: sel turun ke laporan terlihat terbaru berikutnya, atau kembali "belum terpantau" bila tidak ada lagi.
 
 Pendekatan ini menghindari bias yang muncul apabila kepadatan dihitung dari banyaknya laporan warga pada suatu area.
 
@@ -111,8 +117,15 @@ Pendekatan ini menghindari bias yang muncul apabila kepadatan dihitung dari bany
 - `flutter_map` + `latlong2` (peta, tile OpenStreetMap)
 - `geolocator`, `image_picker`, `path_provider`
 
+**Dashboard Web** (`dashboard/`)
+- Next.js (App Router), React, TypeScript, Tailwind CSS v4
+- Firebase Web SDK (Authentication Google dan email, Cloud Firestore)
+- `react-leaflet` (peta sel), Recharts (grafik), Vitest (tes)
+- Deploy di Vercel
+
 **Backend & Infrastruktur**
-- Firebase: Cloud Firestore, Authentication (anonim), Cloud Functions
+- Firebase: Cloud Firestore, Authentication (anonim untuk aplikasi; Google dan email untuk dasbor), Cloud Functions
+- Peran admin disimpan sebagai *custom claim* Firebase Auth; perubahan data admin lewat Cloud Functions *callable*
 - Sinkronisasi luring melalui *offline persistence* Firestore
 
 **Machine Learning**
@@ -128,8 +141,9 @@ Pendekatan ini menghindari bias yang muncul apabila kepadatan dihitung dari bany
 
 - Flutter SDK (Android + iOS)
 - Android Studio / Xcode (sesuai target)
-- Akun Firebase
-- Node.js (untuk Cloud Functions)
+- Akun Firebase (Firestore, Authentication, Cloud Functions)
+- Node.js 24 (Cloud Functions) dan [Firebase CLI](https://firebase.google.com/docs/cli)
+- Node.js dan [pnpm](https://pnpm.io) (dasbor web)
 
 ### Menjalankan secara lokal
 
@@ -152,15 +166,41 @@ cd ios && pod install && cd ..
 flutter run
 ```
 
-Aktifkan **Cloud Firestore** dan **Authentication (Anonymous)** di Firebase Console. Untuk agregasi peta, deploy Cloud Functions:
+Di Firebase Console, aktifkan **Cloud Firestore** dan **Authentication** dengan penyedia **Anonymous** (aplikasi mobile), serta **Google** dan **Email/Password** (dasbor web). Aplikasi mobile masuk anonim saat dibuka karena *Security Rules* mensyaratkan pengguna terautentikasi.
+
+Deploy aturan, indeks, dan Cloud Functions (agregasi peta serta fungsi admin):
 
 ```bash
-cd functions
-npm install
+firebase login
+firebase deploy --only firestore        # firestore.rules dan firestore.indexes.json
+cd functions && npm install && cd ..
 firebase deploy --only functions
 ```
 
 > Catatan: model klasifikasi (`assets/model/model_jenis.tflite`) sudah tertanam di aplikasi, sehingga klasifikasi berjalan tanpa konfigurasi tambahan.
+
+### Menjalankan dasbor web
+
+```bash
+cd dashboard
+pnpm install
+cp .env.local.example .env.local   # isi 6 variabel NEXT_PUBLIC_FIREBASE_* dari Firebase Console
+pnpm dev                           # http://localhost:3000
+```
+
+Panduan lengkap (peran, struktur, deploy ke Vercel) ada di [`dashboard/README.md`](dashboard/README.md).
+
+### Membuat admin pertama
+
+Setiap akun dasbor berperan **Pemantau** secara bawaan. Admin pertama dibuat sekali lewat skrip yang memakai Admin SDK (setelah akun itu masuk ke dasbor satu kali):
+
+```bash
+gcloud auth application-default login
+cd functions
+node scripts/bootstrap-admin.js email-anda@contoh.com
+```
+
+Admin berikutnya diangkat dari halaman **Pengguna** di dasbor. Jangan menyimpan kunci *service account* di repositori maupun di Vercel.
 
 ### Membangun APK Rilis
 
@@ -178,11 +218,46 @@ Untuk memasang APK, aktifkan izin *Install from Unknown Sources* pada perangkat 
 
 ---
 
+## Struktur Repositori
+
+```
+lib/                 aplikasi Flutter (fitur, model, klasifikasi TFLite, logika geo)
+functions/           Cloud Functions: agregasiLaporan, setReportHidden, setUserRole
+dashboard/           dasbor web Next.js (lihat dashboard/README.md)
+shared/              geo-fixtures.json: fixture acuan untuk logika grid sel
+test/                tes Flutter (paritas geo)
+firestore.rules      Security Rules
+firestore.indexes.json  indeks komposit
+assets/ docs/        model, gambar, dan dokumentasi
+```
+
+Logika grid sel ada di tiga bahasa (`lib/core/geo.dart`, `functions/geo.js`, `dashboard/src/lib/geo.ts`) dan dijaga satu fixture agar hasilnya identik.
+
+---
+
+## Pengujian
+
+```bash
+flutter test test/geo_parity_test.dart     # paritas geo (Dart)
+cd functions && npm test                   # paritas geo (JS) dan logika sel
+cd dashboard && pnpm test:run              # paritas geo (TS) dan palet warna
+```
+
+---
+
+## Rencana Pengembangan
+
+- Deteksi objek untuk menggantikan klasifikasi gambar penuh (lokasi dan jumlah objek per foto).
+- Penyimpanan foto laporan di cloud.
+- Pengayaan dataset lapangan, terutama kelas Styrofoam dan Jaring.
+
+---
+
 ## Tim
 
-**Mencari Jati Diri** | Universitas Gadjah Mada
+Universitas Gadjah Mada
 
-- Nyoman Dimas W. B.
+- Nyoman Dimas Wira Bakti
 - Khayr Nouredine Yunus
 - Rafa Irhamniyansyah Achmad
 
