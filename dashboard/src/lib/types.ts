@@ -1,4 +1,3 @@
-import type { Timestamp } from "firebase/firestore";
 export type UserRole = "pemantau" | "admin";
 
 export type WasteType = "plastik" | "styrofoam" | "logam" | "kaca" | "jaring";
@@ -12,31 +11,6 @@ export const WASTE_TYPE_LABELS: Record<WasteType, string> = {
 };
 
 export type SeveritySource = "manual" | "ai";
-
-// Bentuk mentah di Firestore (createdAt/latestReportAt masih Timestamp)
-export interface CellDocRaw {
-  cellId: string;
-  latestSeverity: number;
-  latestReportAt: Timestamp;
-  types: string[];
-}
-export interface ReportDocRaw {
-  types: string[];
-  severity: number;
-  severitySource: string;
-  lat: number;
-  lng: number;
-  cellId: string;
-  createdAt: Timestamp;
-  reporterId: string;
-  thumbnailUrl: string | null;
-  localPhotoPath: string | null;
-
-  // opsional, dokumen lama tidak punya
-  hidden?: boolean;
-  hiddenReason?: string;
-  hiddenAt?: Timestamp;
-}
 
 // Bentuk yang dipakai UI (Timestamp sudah jadi Date)
 export interface Cell {

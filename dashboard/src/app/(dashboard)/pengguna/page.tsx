@@ -4,9 +4,8 @@ import { RequireAdmin } from "@/components/RequireAdmin";
 import { useAuth } from "@/components/AuthProvider";
 import { useUsers } from "@/hooks/useUsers";
 import { setUserRole } from "@/lib/functions";
+import { ErrorNotice, TableSkeleton } from "@/components/StateNotice";
 import type { AppUser } from "@/lib/types";
-
-const DANGER = { backgroundColor: "#d93a3f1F", color: "#d93a3f" };
 
 function PenggunaContent() {
   const { user } = useAuth();
@@ -56,28 +55,16 @@ function PenggunaContent() {
 
       {notice && (
         <div
-          className='rounded-xl border p-4 text-body-sm'
-          style={
+          role={notice.ok ? "status" : "alert"}
+          className={`rounded-xl border p-4 text-body-sm ${
             notice.ok
-              ? {
-                  borderColor: "#0F8A7E55",
-                  backgroundColor: "#0F8A7E0F",
-                  color: "#0C2C2A",
-                }
-              : {
-                  borderColor: "#d93a3f55",
-                  backgroundColor: "#d93a3f0F",
-                  color: "#d93a3f",
-                }
-          }>
+              ? "border-brand-500/30 bg-brand-500/5 text-ink"
+              : "border-danger/30 bg-danger/5 text-danger"
+          }`}>
           {notice.text}
         </div>
       )}
-      {error && (
-        <div className='text-body-sm' style={{ color: "#d93a3f" }}>
-          Gagal memuat pengguna: {error.message}
-        </div>
-      )}
+      {error && <ErrorNotice what='daftar pengguna' error={error} />}
 
       <div className='text-body-sm text-muted'>
         {loading ? "Memuat..." : `${users.length} akun · ${adminCount} admin`}
@@ -95,6 +82,7 @@ function PenggunaContent() {
             </tr>
           </thead>
           <tbody>
+            {loading && <TableSkeleton cols={5} />}
             {users.map((u) => {
               const isSelf = u.uid === user?.uid;
               const isAdminRow = u.role === "admin";
@@ -131,8 +119,11 @@ function PenggunaContent() {
                         <button
                           disabled={busy === u.uid}
                           onClick={() => change(u)}
-                          className='rounded-lg px-3 py-1.5 text-body-sm font-semibold disabled:opacity-60'
-                          style={isAdminRow ? DANGER : undefined}>
+                          className={`rounded-lg px-3 py-1.5 text-body-sm font-semibold disabled:opacity-60 ${
+                            isAdminRow
+                              ? "bg-danger/10 text-danger"
+                              : "bg-brand-500 text-white"
+                          }`}>
                           {busy === u.uid
                             ? "Memproses..."
                             : isAdminRow

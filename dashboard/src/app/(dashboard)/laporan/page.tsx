@@ -4,30 +4,22 @@ import { useRouter } from "next/navigation";
 import { X } from "lucide-react";
 import { useAllReports } from "@/hooks/useAllReports";
 import { SeverityBadge } from "@/components/SeverityBadge";
+import { ErrorNotice, TableSkeleton } from "@/components/StateNotice";
 import { WASTE_TYPE_LABELS, type WasteType } from "@/lib/types";
+import {
+  SEVERITY_COLOR,
+  SEVERITY_LEVELS,
+  WASTE_TYPES,
+} from "@/lib/palette";
+import { toggle } from "@/lib/sets";
 import { useAuth } from "@/components/AuthProvider";
 
-const TYPES: WasteType[] = ["plastik", "styrofoam", "logam", "kaca", "jaring"];
-const LEVELS = [1, 2, 3, 4, 5];
-const LEVEL_COLOR: Record<number, string> = {
-  1: "#12a150",
-  2: "#6c8c28",
-  3: "#c77700",
-  4: "#d0581f",
-  5: "#d93a3f",
-};
 const PAGE_SIZE = 15;
-
-function toggle<T>(set: Set<T>, val: T): Set<T> {
-  const next = new Set(set);
-  next.has(val) ? next.delete(val) : next.add(val);
-  return next;
-}
 
 export default function LaporanPage() {
   const router = useRouter();
   const { isAdmin } = useAuth();
-  const { reports, loading } = useAllReports(2000, isAdmin);
+  const { reports, loading, error } = useAllReports(2000, isAdmin);
   const [status, setStatus] = useState<"semua" | "tampil" | "tersembunyi">(
     "semua",
   );
@@ -82,7 +74,7 @@ export default function LaporanPage() {
       <div className='space-y-3 rounded-xl border border-border bg-surface p-4'>
         <div className='flex flex-wrap items-center gap-2'>
           <span className='w-24 text-body-sm text-muted'>Jenis:</span>
-          {TYPES.map((t) => (
+          {WASTE_TYPES.map((t) => (
             <button
               key={t}
               onClick={() => {
@@ -100,7 +92,7 @@ export default function LaporanPage() {
         </div>
         <div className='flex flex-wrap items-center gap-2'>
           <span className='w-24 text-body-sm text-muted'>Tingkat:</span>
-          {LEVELS.map((l) => (
+          {SEVERITY_LEVELS.map((l) => (
             <button
               key={l}
               onClick={() => {
@@ -113,7 +105,7 @@ export default function LaporanPage() {
                   : "border-border text-muted hover:border-brand-500"
               }`}
               style={
-                levels.has(l) ? { backgroundColor: LEVEL_COLOR[l] } : undefined
+                levels.has(l) ? { backgroundColor: SEVERITY_COLOR[l] } : undefined
               }>
               L{l}
             </button>
@@ -171,6 +163,8 @@ export default function LaporanPage() {
         )}
       </div>
 
+      {error && <ErrorNotice what='laporan' error={error} />}
+
       <div className='text-body-sm text-muted'>
         {loading ? "Memuat..." : `${filtered.length} laporan`}
       </div>
@@ -188,6 +182,7 @@ export default function LaporanPage() {
             </tr>
           </thead>
           <tbody>
+            {loading && <TableSkeleton cols={5} />}
             {rows.map((r) => (
               <tr
                 key={r.id}
@@ -197,11 +192,7 @@ export default function LaporanPage() {
                   {r.id.slice(0, 6).toUpperCase()}
                   {r.hidden && (
                     <span
-                      className='ml-2 rounded-full px-2 py-0.5 font-sans text-caption font-medium'
-                      style={{
-                        backgroundColor: "#d93a3f1F",
-                        color: "#d93a3f",
-                      }}>
+                      className='ml-2 rounded-full px-2 py-0.5 font-sans text-caption font-medium bg-danger/10 text-danger'>
                       Tersembunyi
                     </span>
                   )}
@@ -233,7 +224,7 @@ export default function LaporanPage() {
                 </td>
               </tr>
             ))}
-            {!loading && rows.length === 0 && (
+            {!loading && !error && rows.length === 0 && (
               <tr>
                 <td
                   colSpan={5}

@@ -2,6 +2,7 @@
 import { MapPin, X } from "lucide-react";
 import { useReportsByCell } from "@/hooks/useReportsByCell";
 import { SeverityBadge } from "@/components/SeverityBadge";
+import { ErrorNotice } from "@/components/StateNotice";
 import { WASTE_TYPE_LABELS, type Cell } from "@/lib/types";
 import { cellCenter } from "@/lib/geo";
 import { useAuth } from "@/components/AuthProvider";
@@ -14,7 +15,10 @@ export function CellPanel({
   onClose: () => void;
 }) {
   const { isAdmin } = useAuth();
-  const { reports, loading } = useReportsByCell(cell?.cellId ?? null, isAdmin);
+  const { reports, loading, error } = useReportsByCell(
+    cell?.cellId ?? null,
+    isAdmin,
+  );
 
   if (!cell) {
     return (
@@ -70,6 +74,8 @@ export function CellPanel({
         </div>
         {loading ? (
           <div className='text-body-sm text-muted'>Memuat...</div>
+        ) : error ? (
+          <ErrorNotice what='laporan sel' error={error} />
         ) : reports.length === 0 ? (
           <div className='text-body-sm text-muted'>Belum ada laporan.</div>
         ) : (
@@ -83,8 +89,7 @@ export function CellPanel({
                   <span className='flex items-center gap-2 font-mono text-caption text-muted'>
                     {r.hidden && (
                       <span
-                        className='font-sans font-medium'
-                        style={{ color: "#d93a3f" }}>
+                        className='font-sans font-medium text-danger'>
                         Tersembunyi
                       </span>
                     )}
