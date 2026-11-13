@@ -1,4 +1,6 @@
-export type UserRole = "pemantau" | "admin";
+export type UserRole = "pemantau" | "admin" | "superadmin";
+/** Peran yang boleh diberikan lewat dasbor; "superadmin" hanya lewat skrip bootstrap. */
+export type AssignableRole = Exclude<UserRole, "superadmin">;
 
 export type WasteType = "plastik" | "styrofoam" | "logam" | "kaca" | "jaring";
 

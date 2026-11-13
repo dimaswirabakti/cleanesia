@@ -5,10 +5,16 @@ import { useAuth } from "@/components/AuthProvider";
 import { useUsers } from "@/hooks/useUsers";
 import { setUserRole } from "@/lib/functions";
 import { ErrorNotice, TableSkeleton } from "@/components/StateNotice";
-import type { AppUser } from "@/lib/types";
+import type { AppUser, UserRole } from "@/lib/types";
+
+const ROLE_BADGE: Record<UserRole, { label: string; className: string }> = {
+  superadmin: { label: "Super Admin", className: "bg-ink text-white" },
+  admin: { label: "Admin", className: "bg-brand-500 text-white" },
+  pemantau: { label: "Pemantau", className: "bg-brand-50 text-ink" },
+};
 
 function PenggunaContent() {
-  const { user } = useAuth();
+  const { user, isSuperAdmin } = useAuth();
   const { users, loading, error, reload } = useUsers();
   const [pending, setPending] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
@@ -16,7 +22,7 @@ function PenggunaContent() {
     null,
   );
 
-  const adminCount = users.filter((u) => u.role === "admin").length;
+  const adminCount = users.filter((u) => u.role !== "pemantau").length;
 
   async function change(u: AppUser) {
     const role = u.role === "admin" ? "pemantau" : "admin";
@@ -50,6 +56,7 @@ function PenggunaContent() {
         <p className='mt-1 text-body text-muted'>
           Akun dashboard dan perannya. Pelapor aplikasi mobile bersifat anonim
           sehingga tidak tercantum di sini.
+          {!isSuperAdmin && " Hanya Super Admin yang dapat mengubah peran."}
         </p>
       </div>
 
@@ -86,6 +93,7 @@ function PenggunaContent() {
             {users.map((u) => {
               const isSelf = u.uid === user?.uid;
               const isAdminRow = u.role === "admin";
+              const badge = ROLE_BADGE[u.role] ?? ROLE_BADGE.pemantau;
               return (
                 <tr
                   key={u.uid}
@@ -96,12 +104,8 @@ function PenggunaContent() {
                   <td className='px-4 py-3 text-body-sm text-ink'>{u.email}</td>
                   <td className='px-4 py-3'>
                     <span
-                      className={`rounded-full px-2.5 py-1 text-caption font-medium ${
-                        isAdminRow
-                          ? "bg-brand-500 text-white"
-                          : "bg-brand-50 text-ink"
-                      }`}>
-                      {isAdminRow ? "Admin" : "Pemantau"}
+                      className={`rounded-full px-2.5 py-1 text-caption font-medium ${badge.className}`}>
+                      {badge.label}
                     </span>
                   </td>
                   <td className='px-4 py-3 font-mono text-body-sm text-muted'>
@@ -114,6 +118,10 @@ function PenggunaContent() {
                   <td className='px-4 py-3 text-right'>
                     {isSelf ? (
                       <span className='text-body-sm text-muted'>Akun Anda</span>
+                    ) : u.role === "superadmin" ? (
+                      <span className='text-body-sm text-muted'>Dilindungi</span>
+                    ) : !isSuperAdmin ? (
+                      <span className='text-body-sm text-muted'>—</span>
                     ) : pending === u.uid ? (
                       <div className='flex justify-end gap-2'>
                         <button
