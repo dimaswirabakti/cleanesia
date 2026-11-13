@@ -2,6 +2,7 @@ const { getApps, initializeApp } = require("firebase-admin/app");
 const { getAuth } = require("firebase-admin/auth");
 const { getFirestore, FieldValue } = require("firebase-admin/firestore");
 const { HttpsError } = require("firebase-functions/v2/https");
+const { isSuperAdmin } = require("./adminLogic");
 
 if (!getApps().length) initializeApp();
 const db = getFirestore();
@@ -16,6 +17,15 @@ async function requireAdmin(request) {
   const rec = await getAuth().getUser(request.auth.uid);
   if (rec.customClaims?.admin !== true) {
     throw new HttpsError("permission-denied", "Khusus admin.");
+  }
+  return rec;
+}
+
+/** Seperti requireAdmin, tetapi hanya untuk Super Admin (mengelola peran admin). */
+async function requireSuperAdmin(request) {
+  const rec = await requireAdmin(request);
+  if (!isSuperAdmin(rec.customClaims)) {
+    throw new HttpsError("permission-denied", "Khusus super admin.");
   }
   return rec;
 }
@@ -35,4 +45,4 @@ async function writeAudit(actor, action, target, details = {}, tx = null) {
   else await ref.set(data);
 }
 
-module.exports = { db, requireAdmin, writeAudit };
+module.exports = { db, requireAdmin, requireSuperAdmin, writeAudit };

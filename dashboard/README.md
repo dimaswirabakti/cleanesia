@@ -14,7 +14,7 @@ URL Production: `https://cleanesia-dashboard.vercel.app/`
 | `/laporan`, `/laporan/[id]` | tabel dengan filter dan paginasi, detail satu laporan | masuk |
 | `/statistik` | tren, komposisi jenis, distribusi keparahan, area teratas | masuk |
 | `/tentang`, `/profil` | informasi proyek, akun dan peran | masuk |
-| `/pengguna` | daftar akun dasbor, ubah peran | admin |
+| `/pengguna` | daftar akun dasbor; ubah peran hanya untuk Super Admin | admin (ubah peran: Super Admin) |
 | `/audit` | 100 aksi admin terakhir | admin |
 
 Di detail laporan, admin juga mendapat panel moderasi (sembunyikan/pulihkan dengan alasan).
@@ -56,11 +56,12 @@ Variabel `NEXT_PUBLIC_*` ditanamkan saat build, jadi perubahan nilai di Vercel m
 ## Peran dan akses
 
 - **Pemantau** (bawaan saat login pertama): hanya membaca peta, laporan, dan statistik. Laporan yang disembunyikan tidak terlihat.
-- **Admin**: moderasi laporan, halaman Pengguna, dan Jejak Audit.
+- **Admin**: moderasi laporan, serta melihat halaman Pengguna dan Jejak Audit. Tidak dapat mengangkat atau mencabut admin.
+- **Super Admin** (hanya satu): semua kemampuan admin, ditambah satu-satunya yang dapat mengangkat dan mencabut admin. Tidak dapat dicabut atau diubah dari dasbor.
 
-Peran admin disimpan sebagai *custom claim* `admin` pada Firebase Auth (dokumen `users/{uid}.role` hanya cermin untuk tampilan). `isAdmin` di UI dibaca dari token dan hanya untuk kenyamanan; yang melindungi data adalah Cloud Functions (memverifikasi peran ke Firebase Auth pada setiap panggilan) dan Security Rules (penulisan langsung ke `reports` dan `cells` ditolak). Claim yang baru diberikan baru terbaca di UI setelah pengguna keluar lalu masuk lagi.
+Peran disimpan sebagai *custom claim* pada Firebase Auth: `admin` untuk admin, dan `superAdmin` (bersama `admin`) untuk Super Admin. Dokumen `users/{uid}.role` (`pemantau`, `admin`, `superadmin`) hanya cermin untuk tampilan; Security Rules sudah mencegah pengguna mengubah `role`-nya sendiri. `isAdmin` dan `isSuperAdmin` di UI dibaca dari token dan hanya untuk kenyamanan; yang melindungi data adalah Cloud Functions (memverifikasi peran ke Firebase Auth pada setiap panggilan, `setUserRole` khusus Super Admin dan menolak target Super Admin) dan Security Rules (penulisan langsung ke `reports` dan `cells` ditolak). Claim yang baru diberikan baru terbaca di UI setelah pengguna keluar lalu masuk lagi.
 
-Admin pertama dibuat dengan `functions/scripts/bootstrap-admin.js`; langkahnya ada di README root.
+Super Admin hanya dapat dibuat dengan `functions/scripts/bootstrap-admin.js --super`; langkahnya ada di README root. Pemilik proyek Firebase tetap dapat mengubah claim lewat Console atau Admin SDK, karena itu di luar sistem peran dasbor.
 
 ## Data
 

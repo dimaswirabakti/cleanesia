@@ -190,17 +190,19 @@ pnpm dev                           # http://localhost:3000
 
 Panduan lengkap (peran, struktur, deploy ke Vercel) ada di [`dashboard/README.md`](dashboard/README.md).
 
-### Membuat admin pertama
+### Membuat Super Admin
 
-Setiap akun dasbor berperan **Pemantau** secara bawaan. Admin pertama dibuat sekali lewat skrip yang memakai Admin SDK (setelah akun itu masuk ke dasbor satu kali):
+Setiap akun dasbor berperan **Pemantau** secara bawaan. **Super Admin** (otoritas tertinggi, hanya satu) dibuat sekali lewat skrip yang memakai Admin SDK, setelah akun itu masuk ke dasbor satu kali:
 
 ```bash
 gcloud auth application-default login
 cd functions
-node scripts/bootstrap-admin.js email-anda@contoh.com
+node scripts/bootstrap-admin.js email-anda@contoh.com --super
 ```
 
-Admin berikutnya diangkat dari halaman **Pengguna** di dasbor. Jangan menyimpan kunci *service account* di repositori maupun di Vercel.
+Skrip menolak bila sudah ada Super Admin lain. Setelah dijalankan, keluar lalu masuk lagi di dasbor agar claim baru terbaca.
+
+Admin biasa diangkat oleh Super Admin dari halaman **Pengguna** di dasbor. Super Admin tidak dapat dicabut atau diubah dari dasbor, dan admin biasa tidak dapat mengelola peran. Tanpa `--super`, skrip yang sama membuat admin biasa (berguna bila dasbor belum bisa dipakai). Jangan menyimpan kunci *service account* di repositori maupun di Vercel.
 
 ### Membangun APK Rilis
 

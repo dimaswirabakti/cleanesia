@@ -5,7 +5,7 @@ import { useAuth } from "@/components/AuthProvider";
 import { logout } from "@/lib/auth";
 
 export default function ProfilPage() {
-  const { user, profile, loading, isAdmin } = useAuth();
+  const { user, profile, loading, isAdmin, isSuperAdmin } = useAuth();
 
   if (loading) return <div className='p-8 text-body text-muted'>Memuat...</div>;
 
@@ -19,7 +19,11 @@ export default function ProfilPage() {
         year: "numeric",
       })
     : "—";
-  const roleLabel = isAdmin ? "Administrator" : "Pemantau";
+  const roleLabel = isSuperAdmin
+    ? "Super Admin"
+    : isAdmin
+      ? "Administrator"
+      : "Pemantau";
 
   return (
     <div className='mx-auto max-w-3xl space-y-5 p-6 lg:p-8'>
@@ -75,12 +79,14 @@ export default function ProfilPage() {
           </span>
           <div>
             <div className='text-body font-medium text-ink'>
-              {isAdmin ? "Administrator" : "Akses baca (Pemantau)"}
+              {isAdmin ? roleLabel : "Akses baca (Pemantau)"}
             </div>
             <p className='mt-1 text-body-sm leading-relaxed text-muted'>
-              {isAdmin
-                ? "Selain melihat peta keparahan, tabel laporan, dan analitik, Anda dapat memoderasi laporan dan mengelola peran pengguna. Setiap perubahan tercatat dalam jejak audit."
-                : "Anda dapat melihat seluruh peta keparahan, tabel laporan, dan analitik. Peran ini bersifat pemantauan saja, sehingga data laporan warga tidak dapat diubah, dihapus, atau ditambah dari sini."}
+              {isSuperAdmin
+                ? "Otoritas tertinggi: selain memoderasi laporan, hanya Anda yang dapat mengangkat dan mencabut admin. Peran Anda tidak dapat diubah dari dasbor. Setiap perubahan tercatat dalam jejak audit."
+                : isAdmin
+                  ? "Selain melihat peta keparahan, tabel laporan, dan analitik, Anda dapat memoderasi laporan. Pengangkatan dan pencabutan admin hanya dapat dilakukan Super Admin. Setiap perubahan tercatat dalam jejak audit."
+                  : "Anda dapat melihat seluruh peta keparahan, tabel laporan, dan analitik. Peran ini bersifat pemantauan saja, sehingga data laporan warga tidak dapat diubah, dihapus, atau ditambah dari sini."}
             </p>
           </div>
         </div>

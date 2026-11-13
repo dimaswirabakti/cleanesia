@@ -1,7 +1,14 @@
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { getAuth } = require("firebase-admin/auth");
-const { db, requireAdmin, writeAudit } = require("./adminHelpers");
+const {
+  db,
+  requireAdmin,
+  requireSuperAdmin,
+  writeAudit,
+} = require("./adminHelpers");
+const { roleChangeBlockReason } = require("./adminLogic");
 
+// "superadmin" sengaja tidak ada di sini: hanya bisa dibuat lewat scripts/bootstrap-admin.js --super
 const ROLES = ["pemantau", "admin"];
 
 // Uji cepat rantai auth -> claim -> server (aman dihapus nanti, atau dijadikan health check)
@@ -10,8 +17,9 @@ exports.adminPing = onCall(async (request) => {
   return { ok: true, uid: admin.uid, email: admin.email ?? null };
 });
 
+// Hanya Super Admin yang boleh mengangkat/mencabut admin; Super Admin sendiri tidak bisa diubah.
 exports.setUserRole = onCall(async (request) => {
-  const actor = await requireAdmin(request);
+  const actor = await requireSuperAdmin(request);
 
   const { uid, role } = request.data ?? {};
   if (typeof uid !== "string" || !uid || !ROLES.includes(role)) {
@@ -23,6 +31,10 @@ exports.setUserRole = onCall(async (request) => {
     .catch(() => {
       throw new HttpsError("not-found", "Pengguna tidak ditemukan.");
     });
+
+  const blocked = roleChangeBlockReason(target.customClaims);
+  if (blocked) throw new HttpsError("permission-denied", blocked);
+
   const userRef = db.collection("users").doc(uid);
   if (!(await userRef.get()).exists) {
     throw new HttpsError("not-found", "Pengguna belum punya profil dashboard.");
@@ -32,17 +44,7 @@ exports.setUserRole = onCall(async (request) => {
   const makeAdmin = role === "admin";
   if (wasAdmin === makeAdmin) return { changed: false, role };
 
-  if (!makeAdmin) {
-    const n = (
-      await db.collection("users").where("role", "==", "admin").count().get()
-    ).data().count;
-    if (n <= 1) {
-      throw new HttpsError(
-        "failed-precondition",
-        "Tidak boleh mencabut admin terakhir.",
-      );
-    }
-  }
+  // Guard "admin terakhir" tidak diperlukan lagi: Super Admin selalu ada dan tidak bisa dicabut.
 
   const claims = { ...(target.customClaims ?? {}) };
   if (makeAdmin) claims.admin = true;

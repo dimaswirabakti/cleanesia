@@ -10,6 +10,8 @@ type AuthState = {
   profile: AppUser | null;
   /** true bila token memuat claim admin (sumber kebenaran role). Hanya untuk UI; server tetap memverifikasi sendiri. */
   isAdmin: boolean;
+  /** true bila token memuat claim superAdmin (juga isAdmin). Hanya untuk UI; server memverifikasi sendiri. */
+  isSuperAdmin: boolean;
   loading: boolean;
 };
 
@@ -17,6 +19,7 @@ const AuthContext = createContext<AuthState>({
   user: null,
   profile: null,
   isAdmin: false,
+  isSuperAdmin: false,
   loading: true,
 });
 
@@ -24,6 +27,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<AppUser | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(
@@ -33,10 +37,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (u) {
           await ensureUserDoc(u);
           setProfile(await getUserDoc(u.uid));
-          setIsAdmin((await u.getIdTokenResult()).claims.admin === true);
+          const { claims } = await u.getIdTokenResult();
+          setIsAdmin(claims.admin === true);
+          setIsSuperAdmin(claims.superAdmin === true);
         } else {
           setProfile(null);
           setIsAdmin(false);
+          setIsSuperAdmin(false);
         }
         setLoading(false);
       }),
@@ -45,7 +52,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, profile, isAdmin, loading }}>
+      value={{ user, profile, isAdmin, isSuperAdmin, loading }}>
       {children}
     </AuthContext.Provider>
   );
