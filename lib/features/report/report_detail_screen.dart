@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../../core/geo.dart';
 import '../../core/theme.dart';
 import '../../models/report.dart';
+import 'detector_service.dart';
 import 'report_draft.dart';
 
 const _labelJenis = {
@@ -13,6 +14,14 @@ const _labelJenis = {
   WasteType.logam: 'Logam',
   WasteType.kaca: 'Kaca',
   WasteType.jaring: 'Jaring',
+};
+/// Warna kotak deteksi per jenis sampah
+const _warnaJenis = {
+  WasteType.plastik: Color(0xFF3B82F6),
+  WasteType.styrofoam: Color(0xFFF59E0B),
+  WasteType.logam: Color(0xFFA855F7),
+  WasteType.kaca: Color(0xFF10B981),
+  WasteType.jaring: Color(0xFFEF4444),
 };
 const _labelParah = {
   Severity.sangatRendah: 'Sangat Rendah',
@@ -50,12 +59,17 @@ class _S extends State<ReportDetailScreen> {
     try {
       final uid =
           FirebaseAuth.instance.currentUser?.uid ??
-          (await FirebaseAuth.instance.signInAnonymously()).user!.uid;
+              (await FirebaseAuth.instance.signInAnonymously()).user!.uid;
       final lat = draft.lat ?? 0, lng = draft.lng ?? 0;
       final r = Report(
         types: draft.types.toList(),
         severity: draft.severity!,
-        severitySource: SeveritySource.manual,
+        // ai = pengguna memakai saran AI apa adanya, manual = diubah sendiri
+        severitySource:
+        draft.saranKeparahan != null &&
+            draft.severity == draft.saranKeparahan
+            ? SeveritySource.ai
+            : SeveritySource.manual,
         lat: lat,
         lng: lng,
         cellId: computeCellId(lat, lng),
@@ -166,6 +180,105 @@ class _S extends State<ReportDetailScreen> {
     );
   }
 
+  /// Foto laporan beserta kotak hasil deteksi.
+  Widget _foto(ReportDraft draft) {
+    if (draft.lebarFoto == 0 || draft.tinggiFoto == 0) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(AppSpacing.radius),
+        child: Image.file(
+          File(draft.imagePath),
+          height: 200,
+          width: double.infinity,
+          fit: BoxFit.cover,
+        ),
+      );
+    }
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(AppSpacing.radius),
+      child: Container(
+        height: 260,
+        width: double.infinity,
+        color: AppColors.ink900,
+        child: Center(
+          child: AspectRatio(
+            aspectRatio: draft.lebarFoto / draft.tinggiFoto,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                Image.file(File(draft.imagePath), fit: BoxFit.fill),
+                CustomPaint(
+                  painter: _KotakPainter(
+                    draft.kotak,
+                    draft.lebarFoto,
+                    draft.tinggiFoto,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Ringkasan hasil AI: jumlah sampah per jenis dan lama proses.
+  Widget _ringkasanAi(ReportDraft draft) {
+    if (draft.kotak.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.only(top: 8),
+        child: Text(
+          'AI tidak menemukan sampah di foto ini. Pilih jenis dan '
+              'tingkat keparahan secara manual.',
+          style: AppText.caption.copyWith(color: AppColors.warning),
+        ),
+      );
+    }
+    final jumlah = <WasteType, int>{};
+    for (final k in draft.kotak) {
+      jumlah[k.jenis] = (jumlah[k.jenis] ?? 0) + 1;
+    }
+    return Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Wrap(
+            spacing: 12,
+            runSpacing: 4,
+            children: jumlah.entries
+                .map(
+                  (e) => Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 10,
+                    height: 10,
+                    decoration: BoxDecoration(
+                      color: _warnaJenis[e.key],
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    '${_labelJenis[e.key]} ${e.value}',
+                    style: AppText.caption,
+                  ),
+                ],
+              ),
+            )
+                .toList(),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '${draft.kotak.length} sampah terdeteksi, '
+                'diproses dalam ${draft.durasiMs} ms',
+            style: AppText.caption,
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final draft = d!;
@@ -179,15 +292,8 @@ class _S extends State<ReportDetailScreen> {
         children: [
           _stepIndicator(),
           const SizedBox(height: AppSpacing.lg),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(AppSpacing.radius),
-            child: Image.file(
-              File(draft.imagePath),
-              height: 200,
-              width: double.infinity,
-              fit: BoxFit.cover,
-            ),
-          ),
+          _foto(draft),
+          if (!draft.pakaiStub) _ringkasanAi(draft),
           if (draft.pakaiStub)
             const Padding(
               padding: EdgeInsets.only(top: 8),
@@ -234,6 +340,16 @@ class _S extends State<ReportDetailScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text('Tingkat Keparahan', style: AppText.section),
+                if (draft.saranKeparahan != null) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    'Saran AI: ${_labelParah[draft.saranKeparahan]!} '
+                        '(sampah menutupi sekitar '
+                        '${(draft.tutupan * 100).toStringAsFixed(1)}% foto). '
+                        'Ubah jika tidak sesuai.',
+                    style: AppText.caption,
+                  ),
+                ],
                 const SizedBox(height: AppSpacing.sm),
                 Wrap(
                   spacing: 8,
@@ -280,13 +396,13 @@ class _S extends State<ReportDetailScreen> {
               onPressed: _kirim ? null : _simpan,
               child: _kirim
                   ? const SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
-                    )
+                height: 20,
+                width: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.white,
+                ),
+              )
                   : const Text('Kirim Laporan'),
             ),
           ),
@@ -294,4 +410,36 @@ class _S extends State<ReportDetailScreen> {
       ),
     );
   }
+}
+
+/// Menggambar kotak deteksi di atas foto.
+/// Koordinat kotak dalam piksel foto asli, jadi diskalakan ke ukuran widget.
+class _KotakPainter extends CustomPainter {
+  final List<KotakDeteksi> kotak;
+  final int lebarFoto;
+  final int tinggiFoto;
+
+  _KotakPainter(this.kotak, this.lebarFoto, this.tinggiFoto);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final sx = size.width / lebarFoto;
+    final sy = size.height / tinggiFoto;
+    for (final k in kotak) {
+      final paint = Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2
+        ..color = _warnaJenis[k.jenis] ?? Colors.white;
+      canvas.drawRect(
+        Rect.fromLTRB(k.x1 * sx, k.y1 * sy, k.x2 * sx, k.y2 * sy),
+        paint,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _KotakPainter old) =>
+      old.kotak != kotak ||
+          old.lebarFoto != lebarFoto ||
+          old.tinggiFoto != tinggiFoto;
 }

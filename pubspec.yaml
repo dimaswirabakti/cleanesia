@@ -68,9 +68,7 @@ dev_dependencies:
 # The following section is specific to Flutter packages.
 flutter:
   assets:
-    - assets/model/model_jenis.tflite
-    - assets/model/labels.txt
-    - assets/model/thresholds.txt
+    - assets/model/model_deteksi_fp32.tflite
     - assets/images/
 
   # The following line ensures that the Material Icons font is

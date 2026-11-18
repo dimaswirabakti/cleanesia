@@ -1,4 +1,5 @@
 import '../../models/report.dart';
+import 'detector_service.dart';
 
 class ReportDraft {
   final String imagePath;
@@ -10,6 +11,14 @@ class ReportDraft {
   double? lng;
   final bool pakaiStub;
 
+  /// Hasil object detection
+  final List<KotakDeteksi> kotak;
+  final int lebarFoto;
+  final int tinggiFoto;
+  final double tutupan;
+  final Severity? saranKeparahan;
+  final int durasiMs;
+
   ReportDraft({
     required this.imagePath,
     required this.localPhotoName,
@@ -19,5 +28,11 @@ class ReportDraft {
     this.severity,
     this.lat,
     this.lng,
+    this.kotak = const [],
+    this.lebarFoto = 0,
+    this.tinggiFoto = 0,
+    this.tutupan = 0.0,
+    this.saranKeparahan,
+    this.durasiMs = 0,
   });
 }

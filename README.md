@@ -177,8 +177,7 @@ cd functions && npm install && cd ..
 firebase deploy --only functions
 ```
 
-> Catatan: model klasifikasi (`assets/model/model_jenis.tflite`) sudah tertanam di aplikasi, sehingga klasifikasi berjalan tanpa konfigurasi tambahan.
-
+> Catatan: model deteksi objek (`assets/model/model_deteksi_fp32.tflite`, YOLO26n) sudah tertanam di aplikasi, sehingga deteksi sampah berjalan tanpa konfigurasi tambahan.
 ### Menjalankan dasbor web
 
 ```bash

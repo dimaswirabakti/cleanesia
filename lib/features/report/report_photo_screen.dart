@@ -4,7 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../core/theme.dart';
-import 'classifier_service.dart';
+import 'detector_service.dart';
 import 'report_draft.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
@@ -16,13 +16,19 @@ class ReportPhotoScreen extends StatefulWidget {
 }
 
 class _S extends State<ReportPhotoScreen> {
-  final _clf = ClassifierService();
+  final _det = DetectorService();
   bool _sibuk = false;
 
   @override
   void initState() {
     super.initState();
-    _clf.init();
+    _det.init();
+  }
+
+  @override
+  void dispose() {
+    _det.dispose();
+    super.dispose();
   }
 
   Future<Position?> _gps() async {
@@ -49,7 +55,7 @@ class _S extends State<ReportPhotoScreen> {
         maxWidth: 1600,
       );
       if (x == null) return;
-      final hasil = await _clf.classify(File(x.path));
+      final hasil = await _det.deteksi(File(x.path));
       final pos = await _gps();
       final dir = await getApplicationDocumentsDirectory();
       final fotoDir = Directory(p.join(dir.path, 'foto'));
@@ -69,6 +75,13 @@ class _S extends State<ReportPhotoScreen> {
           pakaiStub: hasil.pakaiStub,
           lat: pos?.latitude,
           lng: pos?.longitude,
+          kotak: hasil.kotak,
+          lebarFoto: hasil.lebarFoto,
+          tinggiFoto: hasil.tinggiFoto,
+          tutupan: hasil.tutupan,
+          saranKeparahan: hasil.saranKeparahan,
+          severity: hasil.saranKeparahan,
+          durasiMs: hasil.durasiMs,
         ),
       );
     } on PlatformException catch (e) {
@@ -83,9 +96,9 @@ class _S extends State<ReportPhotoScreen> {
           ),
           action: ditolak
               ? SnackBarAction(
-                  label: 'Pengaturan',
-                  onPressed: () => Geolocator.openAppSettings(),
-                )
+            label: 'Pengaturan',
+            onPressed: () => Geolocator.openAppSettings(),
+          )
               : null,
         ),
       );
@@ -114,108 +127,113 @@ class _S extends State<ReportPhotoScreen> {
         child: _sibuk
             ? const Center(child: CircularProgressIndicator())
             : Padding(
-                padding: const EdgeInsets.all(AppSpacing.lg),
-                child: Column(
-                  children: [
-                    Expanded(
-                      child: SingleChildScrollView(
+          padding: const EdgeInsets.all(AppSpacing.lg),
+          child: Column(
+            children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      const SizedBox(height: AppSpacing.md),
+                      Container(
+                        width: 96,
+                        height: 96,
+                        decoration: const BoxDecoration(
+                          color: AppColors.brand50,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.camera_alt_outlined,
+                          size: 44,
+                          color: AppColors.brand700,
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.lg),
+                      const Text(
+                        'Potret sampah di lokasi',
+                        textAlign: TextAlign.center,
+                        style: AppText.title,
+                      ),
+                      const SizedBox(height: AppSpacing.sm),
+                      Text(
+                        'Foto diambil langsung dari kamera supaya laporan '
+                            'sesuai dengan kondisi pantai saat ini.',
+                        textAlign: TextAlign.center,
+                        style: AppText.body.copyWith(
+                          color: AppColors.ink600,
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.lg),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(AppSpacing.md),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: AppColors.line),
+                          borderRadius: BorderRadius.circular(
+                            AppSpacing.radius,
+                          ),
+                        ),
                         child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const SizedBox(height: AppSpacing.md),
-                            Container(
-                              width: 96,
-                              height: 96,
-                              decoration: const BoxDecoration(
-                                color: AppColors.brand50,
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(
-                                Icons.camera_alt_outlined,
-                                size: 44,
-                                color: AppColors.brand700,
-                              ),
-                            ),
-                            const SizedBox(height: AppSpacing.lg),
                             const Text(
-                              'Potret sampah di lokasi',
-                              textAlign: TextAlign.center,
-                              style: AppText.title,
+                              'Sebelum memotret',
+                              style: AppText.section,
                             ),
                             const SizedBox(height: AppSpacing.sm),
-                            Text(
-                              'Foto diambil langsung dari kamera supaya laporan '
-                              'sesuai dengan kondisi pantai saat ini.',
-                              textAlign: TextAlign.center,
-                              style: AppText.body.copyWith(
-                                color: AppColors.ink600,
-                              ),
+                            _petunjuk(
+                              Icons.place_outlined,
+                              'Potret di tempat sampah berada. Lokasi laporan '
+                                  'mengikuti posisi ponsel saat memotret.',
                             ),
-                            const SizedBox(height: AppSpacing.lg),
-                            Container(
-                              width: double.infinity,
-                              padding: const EdgeInsets.all(AppSpacing.md),
-                              decoration: BoxDecoration(
-                                border: Border.all(color: AppColors.line),
-                                borderRadius: BorderRadius.circular(
-                                  AppSpacing.radius,
-                                ),
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text(
-                                    'Sebelum memotret',
-                                    style: AppText.section,
-                                  ),
-                                  const SizedBox(height: AppSpacing.sm),
-                                  _petunjuk(
-                                    Icons.place_outlined,
-                                    'Potret di tempat sampah berada. Lokasi laporan '
-                                    'mengikuti posisi ponsel saat memotret.',
-                                  ),
-                                  _petunjuk(
-                                    Icons.wb_sunny_outlined,
-                                    'Pastikan cahaya cukup dan sampah terlihat jelas.',
-                                  ),
-                                  _petunjuk(
-                                    Icons.crop_free,
-                                    'Usahakan seluruh tumpukan sampah masuk dalam bingkai.',
-                                  ),
-                                  _petunjuk(
-                                    Icons.auto_awesome_outlined,
-                                    'Jenis sampah dikenali otomatis setelah foto diambil. '
-                                    'Hasilnya bisa diubah di langkah berikutnya.',
-                                  ),
-                                ],
-                              ),
+                            _petunjuk(
+                              Icons.wb_sunny_outlined,
+                              'Pastikan cahaya cukup dan sampah terlihat jelas.',
+                            ),
+                            _petunjuk(
+                              Icons.crop_free,
+                              'Usahakan seluruh tumpukan sampah masuk dalam bingkai.',
+                            ),
+                            _petunjuk(
+                              Icons.accessibility_new,
+                              'Potret sambil berdiri, kira-kira dari setinggi dada, '
+                                  'supaya perkiraan keparahan lebih akurat.',
+                            ),
+                            _petunjuk(
+                              Icons.auto_awesome_outlined,
+                              'Jenis sampah dan tingkat keparahan dikenali otomatis '
+                                  'setelah foto diambil. Hasilnya bisa diubah di langkah berikutnya.',
                             ),
                           ],
                         ),
                       ),
-                    ),
-                    const SizedBox(height: AppSpacing.md),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 54,
-                      child: FilledButton.icon(
-                        style: FilledButton.styleFrom(
-                          backgroundColor: AppColors.brand700,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(
-                              AppSpacing.radius,
-                            ),
-                          ),
-                          textStyle: AppText.section.copyWith(fontSize: 16),
-                        ),
-                        onPressed: _ambil,
-                        icon: const Icon(Icons.camera_alt),
-                        label: const Text('Ambil Foto'),
-                      ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
+              const SizedBox(height: AppSpacing.md),
+              SizedBox(
+                width: double.infinity,
+                height: 54,
+                child: FilledButton.icon(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppColors.brand700,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(
+                        AppSpacing.radius,
+                      ),
+                    ),
+                    textStyle: AppText.section.copyWith(fontSize: 16),
+                  ),
+                  onPressed: _ambil,
+                  icon: const Icon(Icons.camera_alt),
+                  label: const Text('Ambil Foto'),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
